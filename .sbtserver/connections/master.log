@@ -1,0 +1,7 @@
+New log file opened at Mon May 01 22:16:03 BST 2017 by 9956@DESKTOP-U4T053O
+Taking next connection to: 59907
+New client attempting to connect on port: 59908-59907
+  Address = /192.168.56.1:59907
+This client on port 59908 has uuid 6f2cd2ab-3ae6-42b1-afd2-4d4761d740ed configName activator humanReadableName Activator protocolVersion 3 featureTags Vector()
+Connected Clients: activator-6f2cd2ab-3ae6-42b1-afd2-4d4761d740ed
+Taking next connection to: 59907
