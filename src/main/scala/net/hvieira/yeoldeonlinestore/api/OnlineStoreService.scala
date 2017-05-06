@@ -4,6 +4,7 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.event.{LogSource, Logging}
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.headers.{Authorization, OAuth2BearerToken, RawHeader}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{RejectionHandler, Route, UnsupportedRequestContentTypeRejection}
 import akka.http.scaladsl.unmarshalling.Unmarshaller
@@ -12,7 +13,9 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import net.hvieira.yeoldeonlinestore.actor.Authenticator.{AuthenticateUser, UserAuthenticatedResp}
 import net.hvieira.yeoldeonlinestore.actor.CriticalProcessesManager.{IntroduceAuthenticatorReq, IntroduceAuthenticatorResp}
+import net.hvieira.yeoldeonlinestore.actor.OperationResult
 
+import scala.collection.immutable
 import scala.concurrent.duration._
 import scala.util.Success
 
@@ -73,17 +76,22 @@ class OnlineStoreService(val rootProcessManager: ActorRef)
       case Success(IntroduceAuthenticatorResp(actorRef)) => {
 
         val authFuture = actorRef ? AuthenticateUser(loginData.username, loginData.encryptedPassword)
+
         onComplete(authFuture) {
-          case Success(UserAuthenticatedResp) => complete(HttpResponse())
+
+          case Success(UserAuthenticatedResp(OperationResult.OK, _, token)) => {
+            log.info("responding with headers")
+            complete(
+              HttpResponse(OK,
+                entity = HttpEntity(ContentTypes.`application/json`, s"""{"access_token": "$token"}""")
+              ))
+          }
+
           case _ => complete(HttpResponse(InternalServerError))
         }
 
       }
       case _ => complete(HttpResponse(InternalServerError))
     }
-
-
-
-    complete(HttpResponse())
   }
 }

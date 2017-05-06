@@ -32,6 +32,8 @@ class OnlineStoreServiceSpec
       request ~> route ~> check {
         status shouldBe OK
         handled shouldBe true
+        // TODO this should be serialized into an object for easier matching
+        entityAs[String] should fullyMatch regex "\\{\"access_token\": \"(.+)\\.(.+)\\.(.+)\"\\}"
       }
     }
 
