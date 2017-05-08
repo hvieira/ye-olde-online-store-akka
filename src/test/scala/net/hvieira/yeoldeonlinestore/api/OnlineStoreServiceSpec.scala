@@ -13,7 +13,7 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
 
   // TODO probably want to change this to use the akka testkit probe actors and such or with DI
   val testActorSystem = ActorSystem("test-system")
-  val rootProcessManager = testActorSystem.actorOf(CriticalProcessesManager.props)
+  val rootProcessManager = testActorSystem.actorOf(CriticalProcessesManager.props("testSecret"))
 
   val route = new OnlineStoreService(rootProcessManager).route
 

@@ -6,17 +6,16 @@ import net.hvieira.yeoldeonlinestore.actor.CriticalProcessesManager._
 object CriticalProcessesManager {
   private val AUTHENTICATOR = "authenticator"
 
-  val props = Props[CriticalProcessesManager]
+  def props(tokenSecret: String) = Props(new CriticalProcessesManager(tokenSecret))
 
   case object IntroduceAuthenticatorReq
   case class IntroduceAuthenticatorResp(val ref: ActorRef)
 }
 
-class CriticalProcessesManager extends Actor {
+class CriticalProcessesManager(private val tokenSecret: String) extends Actor {
 
   override def preStart(): Unit = {
-    // TODO the token secret should be provided by props from config
-    context.actorOf(Authenticator.props("topSekret"), "authenticator")
+    context.actorOf(Authenticator.props(tokenSecret), AUTHENTICATOR)
   }
 
   override def supervisorStrategy: SupervisorStrategy = OneForOneStrategy() {
@@ -25,8 +24,8 @@ class CriticalProcessesManager extends Actor {
 
   override def receive: Receive = {
     case IntroduceAuthenticatorReq => {
-      val ref = context.child(AUTHENTICATOR)
-      ref match {
+      val possibleRef = context.child(AUTHENTICATOR)
+      possibleRef match {
         case Some(ref) => sender ! IntroduceAuthenticatorResp(ref)
         case None => throw new IllegalStateException("Authenticator process ref does not exist")
       }

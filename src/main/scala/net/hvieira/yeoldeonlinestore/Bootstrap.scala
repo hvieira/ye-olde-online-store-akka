@@ -11,7 +11,9 @@ object Bootstrap extends App {
   implicit val actorSystem = ActorSystem("ye-olde-online-store")
   implicit val actorMaterializer = ActorMaterializer()
 
-  val rootProcessesManager = actorSystem.actorOf(CriticalProcessesManager.props)
+  val tokenSecret = actorSystem.settings.config.getString("auth.token.secret")
+
+  val rootProcessesManager = actorSystem.actorOf(CriticalProcessesManager.props(tokenSecret))
 
   new HttpServer()
     .start(
