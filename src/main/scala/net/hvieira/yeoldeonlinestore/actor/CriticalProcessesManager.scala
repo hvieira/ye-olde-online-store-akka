@@ -15,7 +15,8 @@ object CriticalProcessesManager {
 class CriticalProcessesManager extends Actor {
 
   override def preStart(): Unit = {
-    context.actorOf(Authenticator.props, "authenticator")
+    // TODO the token secret should be provided by props from config
+    context.actorOf(Authenticator.props("topSekret"), "authenticator")
   }
 
   override def supervisorStrategy: SupervisorStrategy = OneForOneStrategy() {

@@ -10,18 +10,20 @@ import scala.util.Success
 
 class AuthenticatorTest extends ActorUnitTest {
 
-  "The authenticator" should {
-    "create JWT tokens on authentication" in {
+  private val goodSecret = "myTopSecret"
 
-      val actorRef = TestActorRef(new Authenticator)
+  "The authenticator" should {
+
+    val actorRef = TestActorRef(new Authenticator(goodSecret))
+
+    "create JWT tokens on authentication" in {
 
       val future = actorRef ? AuthenticateUser("someUser", "somePass")
       val Success(result: UserAuthenticatedResp) = future.value.get
 
-      // TODO the secret is hardcoded here for now but needs to disappear once the actor receives the configuration
-      val decodedToken = Jwt.decodeRawAll(result.authToken, "topSekret", Seq(JwtAlgorithm.HS256))
+      val decodedToken = Jwt.decodeRawAll(result.authToken, goodSecret, Seq(JwtAlgorithm.HS256))
 
-      // TODO this should be improved
+      // TODO this should be improved once a JSON framework is in the project
       decodedToken should matchPattern {
         case Success((_, """{"user":"someUser"}""", _)) =>
       }
