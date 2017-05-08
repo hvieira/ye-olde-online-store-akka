@@ -6,13 +6,10 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import net.hvieira.yeoldeonlinestore.actor.CriticalProcessesManager
+import net.hvieira.yeoldeonlinestore.test.ServiceIntegrationTest
 import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpec}
 
-class OnlineStoreServiceSpec
-  extends WordSpec
-    with Matchers
-    with BeforeAndAfterAll
-    with ScalatestRouteTest {
+class OnlineStoreServiceSpec extends ServiceIntegrationTest {
 
   // TODO probably want to change this to use the akka testkit probe actors and such or with DI
   val testActorSystem = ActorSystem("test-system")

@@ -1,25 +1,14 @@
 package net.hvieira.yeoldeonlinestore.actor
 
-import akka.actor.ActorSystem
-import akka.testkit.{DefaultTimeout, ImplicitSender, TestActorRef, TestKit, TestKitBase}
-import net.hvieira.yeoldeonlinestore.actor.Authenticator.{AuthenticateUser, UserAuthenticatedResp}
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpec, WordSpecLike}
-
-import scala.util.Success
 import akka.pattern.ask
-import akka.util.Timeout
+import akka.testkit.TestActorRef
+import net.hvieira.yeoldeonlinestore.actor.Authenticator.{AuthenticateUser, UserAuthenticatedResp}
+import net.hvieira.yeoldeonlinestore.test.ActorUnitTest
 import pdi.jwt.{Jwt, JwtAlgorithm}
 
-import scala.collection.immutable.Map
-import scala.concurrent.duration._
+import scala.util.Success
 
-class AuthenticatorTest
-  extends TestKit(ActorSystem("testSystem"))
-    with DefaultTimeout
-    with ImplicitSender
-    with WordSpecLike
-    with Matchers
-    with BeforeAndAfterAll {
+class AuthenticatorTest extends ActorUnitTest {
 
   "The authenticator" should {
     "create JWT tokens on authentication" in {
