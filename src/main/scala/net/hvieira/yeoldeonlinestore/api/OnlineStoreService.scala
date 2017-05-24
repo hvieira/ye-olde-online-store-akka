@@ -4,18 +4,15 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.event.{LogSource, Logging}
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.{Authorization, OAuth2BearerToken, RawHeader}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{RejectionHandler, Route, UnsupportedRequestContentTypeRejection}
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import net.hvieira.yeoldeonlinestore.actor.Authenticator.{AuthenticateUser, UserAuthenticatedResp}
 import net.hvieira.yeoldeonlinestore.actor.CriticalProcessesManager.{IntroduceAuthenticatorReq, IntroduceAuthenticatorResp}
-import net.hvieira.yeoldeonlinestore.actor.OperationResult
+import net.hvieira.yeoldeonlinestore.actor.{AuthenticateUser, OperationResult, UserAuthenticatedResp}
 
-import scala.collection.immutable
 import scala.concurrent.duration._
 import scala.util.Success
 
