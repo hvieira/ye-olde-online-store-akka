@@ -2,10 +2,10 @@ name := """ye-olde-online-store-akka"""
 
 version := "1.0"
 
-scalaVersion := "2.11.6"
+scalaVersion := "2.12.2"
 
-lazy val akkaVersion = "2.4.18"
-lazy val akkaHttpVersion = "10.0.5"
+lazy val akkaVersion = "2.5.2"
+lazy val akkaHttpVersion = "10.0.6"
 
 libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-actor" % akkaVersion,
