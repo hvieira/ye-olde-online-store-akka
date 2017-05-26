@@ -27,9 +27,7 @@ class AuthenticatorSpec extends ActorUnitTest {
       val decodedToken = Jwt.decodeRawAll(result.authToken, goodSecret, Seq(JwtAlgorithm.HS256))
 
       inside(decodedToken) {
-        case Success((_, claim: String, _)) => {
-          val jsonObj = claim.parseJson.asJsObject.fields should contain("user" -> JsString("someUser"))
-        }
+        case Success((_, claim: String, _)) => claim.parseJson.asJsObject.fields should contain("user" -> JsString("someUser"))
       }
 
     }
