@@ -3,13 +3,13 @@ package net.hvieira.yeoldeonlinestore.actor
 import akka.pattern.ask
 import akka.testkit.TestActorRef
 import net.hvieira.yeoldeonlinestore.test.ActorUnitTest
+import org.scalatest.Inside._
 import pdi.jwt.{Jwt, JwtAlgorithm}
+import spray.json._
 
 import scala.util.Success
-import spray.json._
-import org.scalatest.Inside._
 
-class AuthenticatorTest extends ActorUnitTest {
+class AuthenticatorSpec extends ActorUnitTest {
 
   private val goodSecret = "myTopSecret"
 
