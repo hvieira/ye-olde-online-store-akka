@@ -19,6 +19,7 @@ import scala.util.Success
 object OnlineStoreService {
   implicit val logSource: LogSource[AnyRef] = new LogSource[AnyRef] {
     def genString(o: AnyRef): String = o.getClass.getName
+
     override def getClazz(o: AnyRef): Class[_] = o.getClass
   }
 }
@@ -66,29 +67,18 @@ class OnlineStoreService(val rootProcessManager: ActorRef)
   def performLogin(loginData: LoginData): Route = {
 
     implicit val timeout = Timeout(1 second)
+    import system.dispatcher
 
-    // TODO the chain of asks here is messy - find a better pattern for this
-    val resp = rootProcessManager ? IntroduceAuthenticatorReq
-    onComplete(resp) {
-      case Success(IntroduceAuthenticatorResp(actorRef)) => {
+    val respFuture = (rootProcessManager ? IntroduceAuthenticatorReq).flatMap {
+      case IntroduceAuthenticatorResp(actorRef) => actorRef ? AuthenticateUser(loginData.username, loginData.encryptedPassword)
+    }
 
-        val authFuture = actorRef ? AuthenticateUser(loginData.username, loginData.encryptedPassword)
-
-        onComplete(authFuture) {
-
-          case Success(UserAuthenticatedResp(OperationResult.OK, _, token)) => {
-            log.info("responding with headers")
-            complete(
-              HttpResponse(OK,
-                entity = HttpEntity(ContentTypes.`application/json`, s"""{"access_token": "$token"}""")
-              ))
-          }
-
-          case _ => complete(HttpResponse(InternalServerError))
-        }
-
-      }
+    onComplete(respFuture) {
+      case Success(UserAuthenticatedResp(OperationResult.OK, _, token)) =>
+        log.info("responding with headers")
+        complete(HttpResponse(OK, entity = HttpEntity(ContentTypes.`application/json`, s"""{"access_token": "$token"}""")))
       case _ => complete(HttpResponse(InternalServerError))
     }
+
   }
 }
