@@ -36,22 +36,32 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
       }
     }
 
-  }
+    "return bad request if content type is unexpected" in {
 
-  import DefaultJsonProtocol._
-  private def authenticateUser(username: String, password: String): String = {
-    val request: HttpRequest = Post("/login",
-      HttpEntity(
-        ContentType(MediaTypes.`application/x-www-form-urlencoded`, HttpCharsets.`UTF-8`),
-        s"""username=${username}&password=${password}"""))
+      val request: HttpRequest = Post("/login",
+        HttpEntity(
+          ContentType(MediaTypes.`application/javascript`, HttpCharsets.`UTF-8`),
+          "some l33t hax code"))
 
-    request ~> route ~> check {
-      status shouldBe OK
-      handled shouldBe true
-
-      val responseBodyAsJson = entityAs[String].parseJson.asJsObject
-      return responseBodyAsJson.fields("access_token").convertTo[String]
+      request ~> route ~> check {
+        status shouldBe BadRequest
+        handled shouldBe true
+      }
     }
+
+    "return bad request if expected login data is missing or empty" in {
+
+      val request: HttpRequest = Post("/login",
+        HttpEntity(
+          ContentType(MediaTypes.`application/x-www-form-urlencoded`, HttpCharsets.`UTF-8`),
+          "username=&password="))
+
+      request ~> route ~> check {
+        status shouldBe BadRequest
+        handled shouldBe true
+      }
+    }
+
   }
 
   "the user API" should {
@@ -97,33 +107,6 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
 
   }
 
-  "return bad request if content type is unexpected" in {
-
-    val request: HttpRequest = Post("/login",
-      HttpEntity(
-        ContentType(MediaTypes.`application/javascript`, HttpCharsets.`UTF-8`),
-        "some l33t hax code"))
-
-    request ~> route ~> check {
-      status shouldBe BadRequest
-      handled shouldBe true
-    }
-  }
-
-  "return bad request if expected data is missing or empty" in {
-
-    val request: HttpRequest = Post("/login",
-      HttpEntity(
-        ContentType(MediaTypes.`application/x-www-form-urlencoded`, HttpCharsets.`UTF-8`),
-        "username=&password="))
-
-    request ~> route ~> check {
-      status shouldBe BadRequest
-      handled shouldBe true
-    }
-  }
-
-
   "The store API" should {
 
     "return not found on resources that do not exist" in {
@@ -139,6 +122,22 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
 
   override def afterAll(): Unit = {
     Http().shutdownAllConnectionPools()
+  }
+
+  import DefaultJsonProtocol._
+  private def authenticateUser(username: String, password: String): String = {
+    val request: HttpRequest = Post("/login",
+      HttpEntity(
+        ContentType(MediaTypes.`application/x-www-form-urlencoded`, HttpCharsets.`UTF-8`),
+        s"""username=${username}&password=${password}"""))
+
+    request ~> route ~> check {
+      status shouldBe OK
+      handled shouldBe true
+
+      val responseBodyAsJson = entityAs[String].parseJson.asJsObject
+      return responseBodyAsJson.fields("access_token").convertTo[String]
+    }
   }
 
 }

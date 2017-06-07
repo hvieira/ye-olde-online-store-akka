@@ -90,10 +90,14 @@ class OnlineStoreService(val rootProcessManager: ActorRef)
 
     onComplete(respFuture) {
       case Success(UserAuthenticatedResp(OperationResult.OK, _, token)) =>
-        log.info("responding with headers")
-        log.info(s"Returning token ${token}")
+        log.debug("Returning token {}", token)
         complete(HttpResponse(OK, entity = HttpEntity(ContentTypes.`application/json`, s"""{"access_token": "$token"}""")))
-      case _ => complete(HttpResponse(InternalServerError))
+      case Success(UserAuthenticatedResp(OperationResult.NOT_OK, _, _)) =>
+        log.warning("Authentication failed for user {}", loginData.username)
+        complete(HttpResponse(Unauthorized))
+      case _ =>
+        log.error("Unexpected result for login flow")
+        complete(HttpResponse(InternalServerError))
     }
 
   }

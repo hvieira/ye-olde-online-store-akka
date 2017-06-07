@@ -1,6 +1,6 @@
 package net.hvieira.yeoldeonlinestore.actor
 
-import akka.actor.{Actor, Props}
+import akka.actor.{Actor, ActorLogging, Props}
 import net.hvieira.yeoldeonlinestore.actor.OperationResult.OperationResult
 import pdi.jwt.{Jwt, JwtAlgorithm, JwtClaim, JwtHeader}
 import spray.json._
@@ -28,7 +28,8 @@ private object TokenPayloadJsonProtocol extends DefaultJsonProtocol {
   implicit val tokenPayloadFormat = jsonFormat1(TokenPayload)
 }
 
-class Authenticator(private val tokenSecret: String) extends Actor {
+// TODO this will be a bottleneck since it is called for every authenticated requests + login reqs - forward requests to child short lived actors per request
+class Authenticator(private val tokenSecret: String) extends Actor with ActorLogging {
 
   import TokenPayloadJsonProtocol._
 
@@ -58,9 +59,7 @@ class Authenticator(private val tokenSecret: String) extends Actor {
           }
 
         case Failure(e) =>
-          // TODO use logs
-          println("Could not decode Authorization token " + token)
-          e.printStackTrace()
+          log.error("Could not decode Authorization token {}", token, e)
           sender ! AuthorizationTokenValidated(OperationResult.NOT_OK, TokenPayload(""))
       }
   }
