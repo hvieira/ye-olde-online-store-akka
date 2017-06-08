@@ -45,13 +45,6 @@ class OnlineStoreService(val rootProcessManager: ActorRef)
       })
   }
 
-  private val loginUnsupportedContentTypeRejectionHandler =
-    RejectionHandler.newBuilder()
-      .handle {
-        case UnsupportedRequestContentTypeRejection(supported) => complete(HttpResponse(BadRequest))
-      }
-      .result()
-
   private def tokenAuthenticator(credentials: Credentials): Future[Option[TokenPayload]] = credentials match {
     case Credentials.Provided(token) => verifyAuthorizationToken(token)
     case _ => Future.successful(None)
@@ -60,13 +53,11 @@ class OnlineStoreService(val rootProcessManager: ActorRef)
   val route = Route.seal(
     path("login") {
       post {
-        handleRejections(loginUnsupportedContentTypeRejectionHandler) {
           decodeRequest {
             entity(as[LoginData]) {
               loginData => performLogin(loginData)
             }
           }
-        }
       }
     } ~
       pathPrefix("user") {

@@ -36,7 +36,7 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
       }
     }
 
-    "return bad request if content type is unexpected" in {
+    "return unsupported media type if content type is unexpected" in {
 
       val request: HttpRequest = Post("/login",
         HttpEntity(
@@ -44,7 +44,7 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
           "some l33t hax code"))
 
       request ~> route ~> check {
-        status shouldBe BadRequest
+        status shouldBe UnsupportedMediaType
         handled shouldBe true
       }
     }
