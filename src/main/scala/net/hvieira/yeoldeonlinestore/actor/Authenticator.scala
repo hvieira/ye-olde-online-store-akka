@@ -51,8 +51,8 @@ class Authenticator(private val tokenSecret: String) extends Actor with ActorLog
       decodedToken match {
         case Success((_, claim: String, _)) =>
           Option(claim.parseJson.asJsObject.fields("user"))
-            .map(js => js.toString()) match {
-            case Some(token) => sender ! AuthorizationTokenValidated(OperationResult.OK, TokenPayload(token))
+            .map(js => js.convertTo[String]) match {
+            case Some(user) => sender ! AuthorizationTokenValidated(OperationResult.OK, TokenPayload(user))
             case _ =>
               println()
               sender ! AuthorizationTokenValidated(OperationResult.NOT_OK, TokenPayload(""))

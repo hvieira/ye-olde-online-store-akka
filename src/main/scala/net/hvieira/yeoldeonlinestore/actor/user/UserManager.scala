@@ -13,19 +13,36 @@ object UserManager {
 
 class UserManager extends Actor {
 
-  def findCurrentUserSession(userId: String): Option[ActorRef] = context.child(s"userSession_${userId}")
+  def findCurrentUserSession(userId: String): Option[ActorRef] = context.child(userSessionActorName(userId))
 
   override def receive: Receive = {
-    case req@AddItemToUserCart(_, _, userId) =>
-      findCurrentUserSession(userId) match {
+    case req@AddItemToUserCart(_, _, user) =>
+      findCurrentUserSession(user) match {
         case Some(ref) =>
           ref forward req
         case None =>
-          val ref = context.actorOf(Props[UserSession], s"userSession_${userId}")
+          val ref = createUserSession(user)
+          ref forward req
+      }
+
+    case req@GetUserCart(user) =>
+      findCurrentUserSession(user) match {
+        case Some(ref) =>
+          ref forward req
+        case None =>
+          val ref = createUserSession(user)
           ref forward req
       }
   }
 
+  private def createUserSession(user: String) = {
+    val ref = context.actorOf(Props[UserSession], userSessionActorName(user))
+    ref
+  }
+
+  private def userSessionActorName(user: String) = {
+    s"userSession${user}"
+  }
 }
 
 private class UserSession extends Actor {
@@ -37,6 +54,9 @@ private class UserSession extends Actor {
       val result = state.addToCart(item, amount)
       sender ! AddItemToCartResult(OK, result.cart)
       become(handleRequest(result), true)
+
+    case GetUserCart(user) =>
+      sender ! UserCart(OK, user, state.cart)
   }
 
   override def receive: Receive = handleRequest(new UserSessionState())
@@ -51,6 +71,10 @@ private class UserSessionState(val balance: Double = 0, val cart: Cart = Map()) 
   }
 
 }
+
+case class GetUserCart(user: String)
+
+case class UserCart(result: OperationResult, user: String, cart: Cart)
 
 case class AddItemToUserCart(item: Item, amount: Int, userId: String)
 

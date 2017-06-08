@@ -5,18 +5,20 @@ import akka.event.{LogSource, Logging}
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
+import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.Credentials
-import akka.http.scaladsl.server.{RejectionHandler, Route, UnsupportedRequestContentTypeRejection}
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import net.hvieira.yeoldeonlinestore.actor.CriticalProcessesManager.{IntroduceAuthenticatorReq, IntroduceAuthenticatorResp}
+import net.hvieira.yeoldeonlinestore.actor.CriticalProcessesManager.{IntroduceAuthenticatorReq, IntroduceAuthenticatorResp, IntroduceUserManagerReq, IntroduceUserManagerResp}
 import net.hvieira.yeoldeonlinestore.actor._
+import net.hvieira.yeoldeonlinestore.actor.user.{GetUserCart, UserCart}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Success
+import spray.json._
 
 object OnlineStoreService {
   implicit val logSource: LogSource[AnyRef] = new LogSource[AnyRef] {
@@ -53,18 +55,19 @@ class OnlineStoreService(val rootProcessManager: ActorRef)
   val route = Route.seal(
     path("login") {
       post {
-          decodeRequest {
-            entity(as[LoginData]) {
-              loginData => performLogin(loginData)
-            }
+        decodeRequest {
+          entity(as[LoginData]) {
+            loginData => performLogin(loginData)
           }
+        }
       }
     } ~
       pathPrefix("user") {
         path("cart") {
-          (get & authenticateOAuth2Async("", tokenAuthenticator)) { userToken =>
-            // TODO wire in request to user actor
-            complete("authenticated request")
+          authenticateOAuth2Async("", tokenAuthenticator) { userToken =>
+            get {
+              retrieveUserCart(userToken.user)
+            }
           }
         }
       }
@@ -83,19 +86,52 @@ class OnlineStoreService(val rootProcessManager: ActorRef)
       case Success(UserAuthenticatedResp(OperationResult.OK, _, token)) =>
         log.debug("Returning token {}", token)
         complete(HttpResponse(OK, entity = HttpEntity(ContentTypes.`application/json`, s"""{"access_token": "$token"}""")))
+
       case Success(UserAuthenticatedResp(OperationResult.NOT_OK, _, _)) =>
         log.warning("Authentication failed for user {}", loginData.username)
         complete(HttpResponse(Unauthorized))
+
       case _ =>
         log.error("Unexpected result for login flow")
         complete(HttpResponse(InternalServerError))
     }
+  }
 
+  private def retrieveUserCart(user: String): Route = {
+
+    implicit val timeout = Timeout(1 second)
+    import system.dispatcher
+
+    val cartFuture = requestUserManagerRef.flatMap {
+      case IntroduceUserManagerResp(actorRef) => actorRef ? GetUserCart(user)
+    }
+
+    onComplete(cartFuture) {
+      case Success(UserCart(OperationResult.OK, _, cart)) =>
+        log.debug("Returning cart {}", cart)
+        // TODO check proper json marshalling with akka http for custom types
+        import DefaultJsonProtocol._
+        val asMap = cart.map( entry => (entry._1.id, entry._2))
+        complete(HttpResponse(OK, entity = HttpEntity(ContentTypes.`application/json`, asMap.toJson.compactPrint)))
+
+      case Success(UserCart(OperationResult.NOT_OK, _, _)) =>
+        log.error("Failed to retrieve cart for user {}", user)
+        complete(HttpResponse(InternalServerError))
+
+      case _ =>
+        log.error("Unexpected result for cart retrieval flow")
+        complete(HttpResponse(InternalServerError))
+    }
   }
 
   private def requestAutheticatorRef = {
     implicit val timeout = Timeout(1 second)
     rootProcessManager ? IntroduceAuthenticatorReq
+  }
+
+  private def requestUserManagerRef = {
+    implicit val timeout = Timeout(1 second)
+    rootProcessManager ? IntroduceUserManagerReq
   }
 
   private def verifyAuthorizationToken(token: String): Future[Option[TokenPayload]] = {
