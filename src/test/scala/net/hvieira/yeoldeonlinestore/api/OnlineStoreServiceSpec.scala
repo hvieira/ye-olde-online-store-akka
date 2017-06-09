@@ -105,6 +105,43 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
       }
     }
 
+    "allow authenticated requests to update user cart" in {
+
+      val token = authenticateUser("user1", "userSekret")
+      val authHeader = Authorization(OAuth2BearerToken(token))
+
+      {
+        val request: HttpRequest = Get("/user/cart").addHeader(authHeader)
+
+        request ~> route ~> check {
+          status shouldBe OK
+          handled shouldBe true
+
+          val cart = entityAs[Cart]
+          cart.itemsToQuantityMap() shouldBe empty
+        }
+      }
+
+      {
+        val request: HttpRequest = Put("/user/cart")
+          .addHeader(authHeader)
+          // TODO there should be a way to marshal the entity object and provide the content type automatically
+          .withEntity(ContentTypes.`application/json`, UpdateUserCartRequest("anItem", 2).toJson.compactPrint)
+
+        request ~> route ~> check {
+          status shouldBe OK
+          handled shouldBe true
+
+          val cart = entityAs[Cart]
+          cart.itemsToQuantityMap() should contain (
+            // TODO introduce the concept of product portfolio with items and respective prices
+            "anItem" -> (2, 0.0)
+          )
+        }
+      }
+
+    }
+
   }
 
   "The store API" should {
@@ -123,8 +160,6 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
   override def afterAll(): Unit = {
     Http().shutdownAllConnectionPools()
   }
-
-  import DefaultJsonProtocol._
   private def authenticateUser(username: String, password: String): String = {
     val request: HttpRequest = Post("/login",
       HttpEntity(

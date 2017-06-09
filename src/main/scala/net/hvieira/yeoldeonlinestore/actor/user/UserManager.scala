@@ -3,7 +3,7 @@ package net.hvieira.yeoldeonlinestore.actor.user
 import akka.actor.{Actor, ActorRef, Props}
 import net.hvieira.yeoldeonlinestore.actor.OperationResult
 import net.hvieira.yeoldeonlinestore.actor.OperationResult._
-import net.hvieira.yeoldeonlinestore.api.{Cart, Item}
+import net.hvieira.yeoldeonlinestore.api.{Cart, Item, UpdateUserCartRequest}
 
 object UserManager {
   def props(): Props = Props[UserManager]
@@ -14,7 +14,7 @@ class UserManager extends Actor {
   def findCurrentUserSession(userId: String): Option[ActorRef] = context.child(userSessionActorName(userId))
 
   override def receive: Receive = {
-    case req@AddItemToUserCart(_, _, user) =>
+    case req@UpdateCart(_, _, user) =>
       findCurrentUserSession(user) match {
         case Some(ref) =>
           ref forward req
@@ -47,13 +47,14 @@ private class UserSession extends Actor {
   import context.become
 
   def handleRequest(state: UserSessionState): Receive = {
-    case AddItemToUserCart(item, amount, user) =>
+    case UpdateCart(item, amount, user) =>
       val result = state.addToCart(item, amount)
       sender ! UserCart(OperationResult.OK, user, result.cart)
       become(handleRequest(result), true)
 
     case GetUserCart(user) =>
       sender ! UserCart(OperationResult.OK, user, state.cart)
+
   }
 
   override def receive: Receive = handleRequest(new UserSessionState())
@@ -70,6 +71,4 @@ case class GetUserCart(user: String)
 
 case class UserCart(result: OperationResult, user: String, cart: Cart)
 
-case class AddItemToUserCart(item: Item, amount: Int, userId: String)
-
-case class FailedReq(reason: String)
+case class UpdateCart(item: Item, amount: Int, userId: String)

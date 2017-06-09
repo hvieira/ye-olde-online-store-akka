@@ -12,7 +12,7 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import net.hvieira.yeoldeonlinestore.actor.CriticalProcessesManager.{IntroduceAuthenticatorReq, IntroduceAuthenticatorResp, IntroduceUserManagerReq, IntroduceUserManagerResp}
 import net.hvieira.yeoldeonlinestore.actor._
-import net.hvieira.yeoldeonlinestore.actor.user.{GetUserCart, UserCart}
+import net.hvieira.yeoldeonlinestore.actor.user.{GetUserCart, UpdateCart, UserCart}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -61,22 +61,20 @@ class OnlineStoreService(val rootProcessManager: ActorRef)
         }
       }
     } ~
-      pathPrefix("user") {
-        path("cart") {
-          authenticateOAuth2Async("", tokenAuthenticator) { userToken =>
-            get {
-              retrieveUserCart(userToken.user)
-            } ~
-            put {
-              decodeRequest {
-                entity(as[LoginData]) {
-                  loginData => performLogin(loginData)
-                }
-              }
+    pathPrefix("user") {
+      path("cart") {
+        authenticateOAuth2Async("", tokenAuthenticator) { userToken =>
+          get {
+            retrieveUserCart(userToken.user)
+          } ~
+          put {
+            entity(as[UpdateUserCartRequest]) { updateUserCartRequest =>
+              updateUserCart(userToken.user, updateUserCartRequest)
             }
           }
         }
       }
+    }
   )
 
   private def performLogin(loginData: LoginData): Route = {
@@ -127,6 +125,31 @@ class OnlineStoreService(val rootProcessManager: ActorRef)
         complete(HttpResponse(InternalServerError))
     }
   }
+
+  def updateUserCart(user: String, req: UpdateUserCartRequest): Route = {
+    implicit val timeout = Timeout(1 second)
+    import system.dispatcher
+
+    val cartFuture = requestUserManagerRef.flatMap {
+      case IntroduceUserManagerResp(actorRef) => actorRef ? UpdateCart(itemFromId(req), req.amount, user)
+    }
+
+    onComplete(cartFuture) {
+      case Success(UserCart(OperationResult.OK, _, cart)) =>
+        log.debug("Returning updated cart {}", cart)
+        complete(cart)
+
+      case Success(UserCart(OperationResult.NOT_OK, _, _)) =>
+        log.error("Failed to update cart for user {}", user)
+        complete(HttpResponse(InternalServerError))
+
+      case _ =>
+        log.error("Unexpected result for cart retrieval flow")
+        complete(HttpResponse(InternalServerError))
+    }
+  }
+
+  private def itemFromId(req: UpdateUserCartRequest) = Item(req.itemId, 0.0)
 
   private def requestAutheticatorRef = {
     implicit val timeout = Timeout(1 second)
