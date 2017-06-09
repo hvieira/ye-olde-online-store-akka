@@ -4,9 +4,8 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.event.{LogSource, Logging}
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.Credentials
+import akka.http.scaladsl.server.{Directives, Route}
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.pattern.ask
 import akka.stream.ActorMaterializer
@@ -18,7 +17,6 @@ import net.hvieira.yeoldeonlinestore.actor.user.{GetUserCart, UserCart}
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Success
-import spray.json._
 
 object OnlineStoreService {
   implicit val logSource: LogSource[AnyRef] = new LogSource[AnyRef] {
@@ -29,7 +27,8 @@ object OnlineStoreService {
 }
 
 class OnlineStoreService(val rootProcessManager: ActorRef)
-                        (implicit val system: ActorSystem, implicit val materializer: ActorMaterializer) {
+                        (implicit val system: ActorSystem,
+                         implicit val materializer: ActorMaterializer) extends Directives with APIJsonSupport {
 
   private val log = Logging(system, this)
 
@@ -67,6 +66,13 @@ class OnlineStoreService(val rootProcessManager: ActorRef)
           authenticateOAuth2Async("", tokenAuthenticator) { userToken =>
             get {
               retrieveUserCart(userToken.user)
+            } ~
+            put {
+              decodeRequest {
+                entity(as[LoginData]) {
+                  loginData => performLogin(loginData)
+                }
+              }
             }
           }
         }
@@ -97,6 +103,7 @@ class OnlineStoreService(val rootProcessManager: ActorRef)
     }
   }
 
+  // TODO cluster methods like this into "services" that simply return the value for the API to complete/reject
   private def retrieveUserCart(user: String): Route = {
 
     implicit val timeout = Timeout(1 second)
@@ -109,10 +116,7 @@ class OnlineStoreService(val rootProcessManager: ActorRef)
     onComplete(cartFuture) {
       case Success(UserCart(OperationResult.OK, _, cart)) =>
         log.debug("Returning cart {}", cart)
-        // TODO check proper json marshalling with akka http for custom types
-        import DefaultJsonProtocol._
-        val asMap = cart.map( entry => (entry._1.id, entry._2))
-        complete(HttpResponse(OK, entity = HttpEntity(ContentTypes.`application/json`, asMap.toJson.compactPrint)))
+        complete(cart)
 
       case Success(UserCart(OperationResult.NOT_OK, _, _)) =>
         log.error("Failed to retrieve cart for user {}", user)

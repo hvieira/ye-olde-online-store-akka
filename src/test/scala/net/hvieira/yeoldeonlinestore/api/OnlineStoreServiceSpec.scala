@@ -89,7 +89,7 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
       }
     }
 
-    "allow authenticated to retrieve user cart" in {
+    "allow authenticated requests to retrieve user cart" in {
 
       val token = authenticateUser("user1", "userSekret")
       val authHeader = Authorization(OAuth2BearerToken(token))
@@ -100,9 +100,8 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
         status shouldBe OK
         handled shouldBe true
 
-        // TODO this needs to be fixed - transform into a proper Map object from the response entity
-        val cart = entityAs[String].parseJson.asJsObject.fields
-        cart shouldBe empty
+        val cart = entityAs[Cart]
+        cart.itemsToQuantityMap() shouldBe empty
       }
     }
 
