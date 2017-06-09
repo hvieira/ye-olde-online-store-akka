@@ -9,7 +9,9 @@ final case class Cart(private val items: Map[String, (Int, Double)] = Map()) {
 
     val totalCost = item.cost * amount
 
-    Cart(items.updated(item.id, (amount, totalCost)))
+    val updatedItemMap = items.updated(item.id, (amount, totalCost)).filter(entry => entry._2._1 > 0)
+
+    Cart(updatedItemMap)
   }
 
   def itemsToQuantityMap(): Map[String, (Int, Double)] = items

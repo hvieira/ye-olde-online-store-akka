@@ -1,6 +1,6 @@
 package net.hvieira.yeoldeonlinestore.actor.user
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import net.hvieira.yeoldeonlinestore.actor.OperationResult
 import net.hvieira.yeoldeonlinestore.actor.OperationResult._
 import net.hvieira.yeoldeonlinestore.api.{Cart, Item, UpdateUserCartRequest}
@@ -42,13 +42,14 @@ class UserManager extends Actor {
   }
 }
 
-private class UserSession extends Actor {
+private class UserSession extends Actor with ActorLogging {
 
   import context.become
 
   def handleRequest(state: UserSessionState): Receive = {
     case UpdateCart(item, amount, user) =>
       val result = state.addToCart(item, amount)
+      log.info("Updated cart is {}", result.cart)
       sender ! UserCart(OperationResult.OK, user, result.cart)
       become(handleRequest(result), true)
 
