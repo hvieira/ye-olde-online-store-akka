@@ -114,10 +114,7 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
 
       // place the first item in the cart
       {
-        val request: HttpRequest = Put("/user/cart")
-          .addHeader(authHeader)
-          // TODO there should be a way to marshal the entity object and provide the content type automatically
-          .withEntity(ContentTypes.`application/json`, UpdateUserCartRequest("anItem", 2).toJson.compactPrint)
+        val request: HttpRequest = Put("/user/cart", UpdateUserCartRequest("anItem", 2)).addHeader(authHeader)
 
         request ~> route ~> check {
           status shouldBe OK
@@ -131,9 +128,7 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
 
       // add another item
       {
-        val request: HttpRequest = Put("/user/cart")
-          .addHeader(authHeader)
-          .withEntity(ContentTypes.`application/json`, UpdateUserCartRequest("anotherItem", 5).toJson.compactPrint)
+        val request: HttpRequest = Put("/user/cart", UpdateUserCartRequest("anotherItem", 5)).addHeader(authHeader)
 
         request ~> route ~> check {
           status shouldBe OK
@@ -155,9 +150,7 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
 
       // place the first item in the cart
       {
-        val request: HttpRequest = Put("/user/cart")
-          .addHeader(authHeader)
-          .withEntity(ContentTypes.`application/json`, UpdateUserCartRequest("anItem", 2).toJson.compactPrint)
+        val request: HttpRequest = Put("/user/cart", UpdateUserCartRequest("anItem", 2)).addHeader(authHeader)
 
         request ~> route ~> check {
           status shouldBe OK
@@ -170,9 +163,7 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
 
       // update an item quantity
       {
-        val request: HttpRequest = Put("/user/cart")
-          .addHeader(authHeader)
-          .withEntity(ContentTypes.`application/json`, UpdateUserCartRequest("anItem", 5).toJson.compactPrint)
+        val request: HttpRequest = Put("/user/cart", UpdateUserCartRequest("anItem", 5)).addHeader(authHeader)
 
         request ~> route ~> check {
           status shouldBe OK
@@ -184,9 +175,7 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
       }
 
       {
-        val request: HttpRequest = Put("/user/cart")
-          .addHeader(authHeader)
-          .withEntity(ContentTypes.`application/json`, UpdateUserCartRequest("anItem", 3).toJson.compactPrint)
+        val request: HttpRequest = Put("/user/cart", UpdateUserCartRequest("anItem", 3)).addHeader(authHeader)
 
         request ~> route ~> check {
           status shouldBe OK
@@ -205,9 +194,7 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
 
       // place the first item in the cart
       {
-        val request: HttpRequest = Put("/user/cart")
-          .addHeader(authHeader)
-          .withEntity(ContentTypes.`application/json`, UpdateUserCartRequest("anItem", 2).toJson.compactPrint)
+        val request: HttpRequest = Put("/user/cart", UpdateUserCartRequest("anItem", 2)).addHeader(authHeader)
 
         request ~> route ~> check {
           status shouldBe OK
@@ -220,9 +207,7 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
 
       // remove the item from cart
       {
-        val request: HttpRequest = Put("/user/cart")
-          .addHeader(authHeader)
-          .withEntity(ContentTypes.`application/json`, UpdateUserCartRequest("anItem", 0).toJson.compactPrint)
+        val request: HttpRequest = Put("/user/cart", UpdateUserCartRequest("anItem", 0)).addHeader(authHeader)
 
         request ~> route ~> check {
           status shouldBe OK
