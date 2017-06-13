@@ -105,25 +105,14 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
       }
     }
 
-    "allow authenticated requests to update user cart" in {
+    // TODO test that an user session starts with empty cart
+
+    "allow authenticated requests to put items in user cart" in {
 
       val token = authenticateUser("user1", "userSekret")
       val authHeader = Authorization(OAuth2BearerToken(token))
 
-      // verify that you start with an empty cart
-      {
-        val request: HttpRequest = Get("/user/cart").addHeader(authHeader)
-
-        request ~> route ~> check {
-          status shouldBe OK
-          handled shouldBe true
-
-          val cart = entityAs[Cart]
-          cart.itemsToQuantityMap() shouldBe empty
-        }
-      }
-
-      // update the cart
+      // place the first item in the cart
       {
         val request: HttpRequest = Put("/user/cart")
           .addHeader(authHeader)
@@ -140,7 +129,46 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
         }
       }
 
-      // update the cart increasing the quantity of a given item
+      // add another item
+      {
+        val request: HttpRequest = Put("/user/cart")
+          .addHeader(authHeader)
+          .withEntity(ContentTypes.`application/json`, UpdateUserCartRequest("anotherItem", 5).toJson.compactPrint)
+
+        request ~> route ~> check {
+          status shouldBe OK
+          handled shouldBe true
+
+          val cart = entityAs[Cart]
+          cart.itemsToQuantityMap() should contain allOf(
+            "anItem" -> (2, 0.0),
+            "anotherItem" -> (5, 0.0)
+          )
+        }
+      }
+    }
+
+    "allow authenticated requests to update item quantity in user cart" in {
+
+      val token = authenticateUser("user2", "userSekret")
+      val authHeader = Authorization(OAuth2BearerToken(token))
+
+      // place the first item in the cart
+      {
+        val request: HttpRequest = Put("/user/cart")
+          .addHeader(authHeader)
+          .withEntity(ContentTypes.`application/json`, UpdateUserCartRequest("anItem", 2).toJson.compactPrint)
+
+        request ~> route ~> check {
+          status shouldBe OK
+          handled shouldBe true
+
+          val cart = entityAs[Cart]
+          cart.itemsToQuantityMap() should contain("anItem" -> (2, 0.0))
+        }
+      }
+
+      // update an item quantity
       {
         val request: HttpRequest = Put("/user/cart")
           .addHeader(authHeader)
@@ -155,25 +183,42 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
         }
       }
 
-      // add another item
       {
         val request: HttpRequest = Put("/user/cart")
           .addHeader(authHeader)
-          .withEntity(ContentTypes.`application/json`, UpdateUserCartRequest("anotherItem", 5).toJson.compactPrint)
+          .withEntity(ContentTypes.`application/json`, UpdateUserCartRequest("anItem", 3).toJson.compactPrint)
 
         request ~> route ~> check {
           status shouldBe OK
           handled shouldBe true
 
           val cart = entityAs[Cart]
-          cart.itemsToQuantityMap() should contain allOf(
-            "anItem" -> (5, 0.0),
-            "anotherItem" -> (5, 0.0)
-          )
+          cart.itemsToQuantityMap() should contain("anItem" -> (3, 0.0))
+        }
+      }
+    }
+
+    "allow authenticated requests to remove items from user cart" in {
+
+      val token = authenticateUser("user3", "userSekret")
+      val authHeader = Authorization(OAuth2BearerToken(token))
+
+      // place the first item in the cart
+      {
+        val request: HttpRequest = Put("/user/cart")
+          .addHeader(authHeader)
+          .withEntity(ContentTypes.`application/json`, UpdateUserCartRequest("anItem", 2).toJson.compactPrint)
+
+        request ~> route ~> check {
+          status shouldBe OK
+          handled shouldBe true
+
+          val cart = entityAs[Cart]
+          cart.itemsToQuantityMap() should contain("anItem" -> (2, 0.0))
         }
       }
 
-      // remove the anItem from cart
+      // remove the item from cart
       {
         val request: HttpRequest = Put("/user/cart")
           .addHeader(authHeader)
@@ -184,12 +229,10 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
           handled shouldBe true
 
           val cart = entityAs[Cart]
-          cart.itemsToQuantityMap() should contain("anotherItem" -> (5, 0.0))
+          cart.itemsToQuantityMap() shouldBe empty
         }
       }
-
     }
-
   }
 
   "The store API" should {
