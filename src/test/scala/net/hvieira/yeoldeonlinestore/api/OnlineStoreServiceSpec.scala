@@ -89,9 +89,9 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
       }
     }
 
-    "allow authenticated requests to retrieve user cart" in {
+    "define empty cart when an user session is started" in {
 
-      val token = authenticateUser("user1", "userSekret")
+      val token = authenticateUser("sessionStartEmptyCartUser", "userSekret")
       val authHeader = Authorization(OAuth2BearerToken(token))
 
       val request: HttpRequest = Get("/user/cart").addHeader(authHeader)
@@ -104,8 +104,6 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
         cart.itemsToQuantityMap() shouldBe empty
       }
     }
-
-    // TODO test that an user session starts with empty cart
 
     "allow authenticated requests to put items in user cart" in {
 
@@ -218,6 +216,33 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
         }
       }
     }
+
+    "allow authenticated requests to retrieve user cart" in {
+
+      val token = authenticateUser("getMyCartUser", "userSekret")
+      val authHeader = Authorization(OAuth2BearerToken(token))
+
+      {
+        val request: HttpRequest = Put("/user/cart", UpdateUserCartRequest("anItem", 17)).addHeader(authHeader)
+
+        request ~> route ~> check {
+          status shouldBe OK
+          handled shouldBe true
+        }
+      }
+
+      {
+        val request: HttpRequest = Get("/user/cart").addHeader(authHeader)
+        request ~> route ~> check {
+          status shouldBe OK
+          handled shouldBe true
+
+          val cart = entityAs[Cart]
+          cart.itemsToQuantityMap() should contain("anItem" -> (17, 0.0))
+        }
+      }
+    }
+
   }
 
   "The store API" should {
