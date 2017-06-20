@@ -33,35 +33,16 @@ class OnlineStoreService(val rootProcessManager: ActorRef, val tokenSecret: Stri
 
   private val log = Logging(system, this)
 
-  implicit val loginDataUM: Unmarshaller[HttpEntity, LoginData] = {
-    Unmarshaller.urlEncodedFormDataUnmarshaller(ContentTypeRange(MediaTypes.`application/x-www-form-urlencoded`))
-      .map(formData => {
-        val username = formData.fields.getOrElse("username", "")
-        val password = formData.fields.getOrElse("password", "")
-
-        if (username.isEmpty || password.isEmpty) {
-          throw new IllegalArgumentException("Missing critical login data")
-        }
-
-        LoginData(username, password)
-      })
-  }
-
   private def tokenAuthenticator(credentials: Credentials): Option[TokenPayload] = credentials match {
     case Credentials.Provided(token) => Authentication.authInfoFromToken(token, tokenSecret)
     case _ => None
   }
 
+  val loginAPI = new LoginAPI(tokenSecret)
+
   val route = Route.seal(
-    path("login") {
-      post {
-        decodeRequest {
-          entity(as[LoginData]) { loginData =>
-            performLogin(loginData)
-          }
-        }
-      }
-    } ~
+    loginAPI.route
+      ~
     path("store") {
       get {
         retrieveStoreFront
