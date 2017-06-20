@@ -1,6 +1,5 @@
 package net.hvieira.yeoldeonlinestore.api
 
-// TODO add tests for this
 final case class Cart(private val items: Map[String, (Int, Double)] = Map()) {
 
   def addItemsToCart(item: Item, amount: Int): Cart = {
@@ -17,3 +16,7 @@ final case class Cart(private val items: Map[String, (Int, Double)] = Map()) {
   def itemsToQuantityMap(): Map[String, (Int, Double)] = items
 
 }
+
+final case class Item(id: String, cost: Double)
+
+final case class LoginData(username: String, encryptedPassword: String)

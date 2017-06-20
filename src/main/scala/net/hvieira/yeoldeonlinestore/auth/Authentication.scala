@@ -1,6 +1,5 @@
 package net.hvieira.yeoldeonlinestore.auth
 
-import net.hvieira.yeoldeonlinestore.actor._
 import pdi.jwt.{Jwt, JwtAlgorithm, JwtClaim, JwtHeader}
 import spray.json.{DefaultJsonProtocol, _}
 
@@ -39,4 +38,4 @@ object Authentication extends DefaultJsonProtocol {
 
 }
 
-case class TokenPayload(user: String)
+final case class TokenPayload(user: String)
