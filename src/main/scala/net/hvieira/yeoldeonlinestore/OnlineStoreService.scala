@@ -6,16 +6,15 @@ import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.directives.Credentials
 import akka.http.scaladsl.server.{Directives, Route}
-import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import net.hvieira.yeoldeonlinestore.actor._
-import net.hvieira.yeoldeonlinestore.actor.store.{StoreFrontRequest, StoreFrontResponse}
 import net.hvieira.yeoldeonlinestore.actor.user.{GetUserCart, UpdateCart, UserCart}
 import net.hvieira.yeoldeonlinestore.api._
 import net.hvieira.yeoldeonlinestore.auth.{Authentication, TokenPayload}
 
+import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.util.Success
 
@@ -39,15 +38,13 @@ class OnlineStoreService(val rootProcessManager: ActorRef, val tokenSecret: Stri
   }
 
   val loginAPI = new LoginAPI(tokenSecret)
+  val storeAPI = new StoreAPI(requestStoreManagerRef())
 
   val route = Route.seal(
     loginAPI.route
       ~
-    path("store") {
-      get {
-        retrieveStoreFront
-      }
-    } ~
+    storeAPI.route
+      ~
     pathPrefix("user") {
       path("cart") {
         authenticateOAuth2("", tokenAuthenticator) { userToken =>
@@ -63,32 +60,6 @@ class OnlineStoreService(val rootProcessManager: ActorRef, val tokenSecret: Stri
       }
     }
   )
-
-  def retrieveStoreFront: Route = {
-
-    implicit val timeout = Timeout(1 second)
-    import system.dispatcher
-
-    log.debug("retrieving store front")
-
-    val storeFrontFuture = requestStoreManagerRef.flatMap {
-      case IntroductionResponse(actorRef) => actorRef ? StoreFrontRequest
-    }
-
-    onComplete(storeFrontFuture) {
-      case Success(StoreFrontResponse(OperationResult.OK, items)) =>
-        log.debug("Returning store {}", items)
-        complete(StoreFront(items))
-
-      case Success(StoreFrontResponse(OperationResult.NOT_OK, _)) =>
-        log.error("Failed to retrieve store front")
-        complete(HttpResponse(InternalServerError))
-
-      case _ =>
-        log.error("Unexpected result for store front retrieval flow")
-        complete(HttpResponse(InternalServerError))
-    }
-  }
 
   private def performLogin(loginData: LoginData): Route = {
 
@@ -153,9 +124,13 @@ class OnlineStoreService(val rootProcessManager: ActorRef, val tokenSecret: Stri
     rootProcessManager ? IntroduceUserManagerReq
   }
 
-  private def requestStoreManagerRef = {
+  // TODO consider getting the reference in a better way
+  private def requestStoreManagerRef() = {
     implicit val timeout = Timeout(1 second)
-    rootProcessManager ? IntroduceStoreManagerReq
+    Await.result(rootProcessManager ? IntroduceStoreManagerReq, 1 second) match {
+      case IntroductionResponse(ref) => ref
+      case _ => throw new IllegalStateException("Requires the store manager to exist at this point")
+    }
   }
 
 }
