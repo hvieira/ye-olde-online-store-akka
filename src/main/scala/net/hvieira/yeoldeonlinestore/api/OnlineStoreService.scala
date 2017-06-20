@@ -13,8 +13,8 @@ import akka.util.Timeout
 import net.hvieira.yeoldeonlinestore.actor.CriticalProcessesManager.{IntroduceAuthenticatorReq, IntroduceAuthenticatorResp, IntroduceUserManagerReq, IntroduceUserManagerResp}
 import net.hvieira.yeoldeonlinestore.actor._
 import net.hvieira.yeoldeonlinestore.actor.user.{GetUserCart, UpdateCart, UserCart}
+import net.hvieira.yeoldeonlinestore.auth.Authentication
 
-import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Success
 
@@ -26,9 +26,9 @@ object OnlineStoreService {
   }
 }
 
-class OnlineStoreService(val rootProcessManager: ActorRef)
-                        (implicit val system: ActorSystem,
-                         implicit val materializer: ActorMaterializer) extends Directives with APIJsonSupport {
+class OnlineStoreService(val rootProcessManager: ActorRef, val tokenSecret: String)
+                        (implicit val system: ActorSystem, implicit val materializer: ActorMaterializer)
+  extends Directives with APIJsonSupport {
 
   private val log = Logging(system, this)
 
@@ -46,9 +46,9 @@ class OnlineStoreService(val rootProcessManager: ActorRef)
       })
   }
 
-  private def tokenAuthenticator(credentials: Credentials): Future[Option[TokenPayload]] = credentials match {
-    case Credentials.Provided(token) => verifyAuthorizationToken(token)
-    case _ => Future.successful(None)
+  private def tokenAuthenticator(credentials: Credentials): Option[TokenPayload] = credentials match {
+    case Credentials.Provided(token) => Authentication.authInfoFromToken(token, tokenSecret)
+    case _ => None
   }
 
   val route = Route.seal(
@@ -61,44 +61,28 @@ class OnlineStoreService(val rootProcessManager: ActorRef)
         }
       }
     } ~
-    pathPrefix("user") {
-      path("cart") {
-        authenticateOAuth2Async("", tokenAuthenticator) { userToken =>
-          get {
-            retrieveUserCart(userToken.user)
-          } ~
-          put {
-            entity(as[UpdateUserCartRequest]) { updateUserCartRequest =>
-              updateUserCart(userToken.user, updateUserCartRequest)
-            }
+      pathPrefix("user") {
+        path("cart") {
+          authenticateOAuth2("", tokenAuthenticator) { userToken =>
+            get {
+              retrieveUserCart(userToken.user)
+            } ~
+              put {
+                entity(as[UpdateUserCartRequest]) { updateUserCartRequest =>
+                  updateUserCart(userToken.user, updateUserCartRequest)
+                }
+              }
           }
         }
       }
-    }
   )
 
   private def performLogin(loginData: LoginData): Route = {
 
-    implicit val timeout = Timeout(1 second)
-    import system.dispatcher
+    val token = Authentication.generateTokenForUser(loginData.username, loginData.encryptedPassword, tokenSecret)
 
-    val respFuture = requestAutheticatorRef.flatMap {
-      case IntroduceAuthenticatorResp(actorRef) => actorRef ? AuthenticateUser(loginData.username, loginData.encryptedPassword)
-    }
-
-    onComplete(respFuture) {
-      case Success(UserAuthenticatedResp(OperationResult.OK, _, token)) =>
-        log.debug("Returning token {}", token)
-        complete(HttpResponse(OK, entity = HttpEntity(ContentTypes.`application/json`, s"""{"access_token": "$token"}""")))
-
-      case Success(UserAuthenticatedResp(OperationResult.NOT_OK, _, _)) =>
-        log.warning("Authentication failed for user {}", loginData.username)
-        complete(HttpResponse(Unauthorized))
-
-      case _ =>
-        log.error("Unexpected result for login flow")
-        complete(HttpResponse(InternalServerError))
-    }
+    log.debug("Returning token {}", token)
+    complete(HttpResponse(OK, entity = HttpEntity(ContentTypes.`application/json`, s"""{"access_token": "$token"}""")))
   }
 
   // TODO cluster methods like this into "services" that simply return the value for the API to complete/reject
@@ -161,15 +145,15 @@ class OnlineStoreService(val rootProcessManager: ActorRef)
     rootProcessManager ? IntroduceUserManagerReq
   }
 
-  private def verifyAuthorizationToken(token: String): Future[Option[TokenPayload]] = {
-    implicit val timeout = Timeout(1 second)
-    import system.dispatcher
-
-    requestAutheticatorRef.flatMap {
-      case IntroduceAuthenticatorResp(actorRef) => actorRef ? ValidateAuthorizationToken(token)
-    } map {
-      case AuthorizationTokenValidated(OperationResult.OK, tokenPayload) => Some(tokenPayload)
-      case _ => None
-    }
-  }
+  //  private def verifyAuthorizationToken(token: String): Future[Option[TokenPayload]] = {
+  //    implicit val timeout = Timeout(1 second)
+  //    import system.dispatcher
+  //
+  //    requestAutheticatorRef.flatMap {
+  //      case IntroduceAuthenticatorResp(actorRef) => actorRef ? ValidateAuthorizationToken(token)
+  //    } map {
+  //      case AuthorizationTokenValidated(OperationResult.OK, tokenPayload) => Some(tokenPayload)
+  //      case _ => None
+  //    }
+  //  }
 }

@@ -19,5 +19,5 @@ object Bootstrap extends App {
     .start(
       "localhost",
       actorSystem.settings.config.getInt("server.port"),
-      new OnlineStoreService(rootProcessesManager).route)
+      new OnlineStoreService(rootProcessesManager, tokenSecret).route)
 }
