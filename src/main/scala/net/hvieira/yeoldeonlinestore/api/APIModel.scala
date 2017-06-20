@@ -20,3 +20,5 @@ final case class Cart(private val items: Map[String, (Int, Double)] = Map()) {
 final case class Item(id: String, cost: Double)
 
 final case class LoginData(username: String, encryptedPassword: String)
+
+final case class UpdateUserCartRequest(itemId: String, amount: Int)

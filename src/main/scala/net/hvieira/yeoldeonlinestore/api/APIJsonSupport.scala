@@ -11,5 +11,3 @@ trait APIJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val updateUserCartRequestFormat: RootJsonFormat[UpdateUserCartRequest] = jsonFormat2(UpdateUserCartRequest)
 
 }
-
-case class UpdateUserCartRequest(itemId: String, amount: Int)
