@@ -38,3 +38,5 @@ object Authentication extends DefaultJsonProtocol {
   }
 
 }
+
+case class TokenPayload(user: String)

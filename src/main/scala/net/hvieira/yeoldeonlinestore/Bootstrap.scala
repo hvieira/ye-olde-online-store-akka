@@ -13,7 +13,7 @@ object Bootstrap extends App {
 
   val tokenSecret = actorSystem.settings.config.getString("auth.token.secret")
 
-  val rootProcessesManager = actorSystem.actorOf(CriticalProcessesManager.props(tokenSecret))
+  val rootProcessesManager = actorSystem.actorOf(CriticalProcessesManager.props())
 
   new HttpServer()
     .start(

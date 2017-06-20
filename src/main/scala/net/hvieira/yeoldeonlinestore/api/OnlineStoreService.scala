@@ -10,10 +10,10 @@ import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import net.hvieira.yeoldeonlinestore.actor.CriticalProcessesManager.{IntroduceAuthenticatorReq, IntroduceAuthenticatorResp, IntroduceUserManagerReq, IntroduceUserManagerResp}
+import net.hvieira.yeoldeonlinestore.actor.CriticalProcessesManager.{IntroduceUserManagerReq, IntroduceUserManagerResp}
 import net.hvieira.yeoldeonlinestore.actor._
 import net.hvieira.yeoldeonlinestore.actor.user.{GetUserCart, UpdateCart, UserCart}
-import net.hvieira.yeoldeonlinestore.auth.Authentication
+import net.hvieira.yeoldeonlinestore.auth.{Authentication, TokenPayload}
 
 import scala.concurrent.duration._
 import scala.util.Success
@@ -135,25 +135,9 @@ class OnlineStoreService(val rootProcessManager: ActorRef, val tokenSecret: Stri
 
   private def itemFromId(req: UpdateUserCartRequest) = Item(req.itemId, 0.0)
 
-  private def requestAutheticatorRef = {
-    implicit val timeout = Timeout(1 second)
-    rootProcessManager ? IntroduceAuthenticatorReq
-  }
-
   private def requestUserManagerRef = {
     implicit val timeout = Timeout(1 second)
     rootProcessManager ? IntroduceUserManagerReq
   }
 
-  //  private def verifyAuthorizationToken(token: String): Future[Option[TokenPayload]] = {
-  //    implicit val timeout = Timeout(1 second)
-  //    import system.dispatcher
-  //
-  //    requestAutheticatorRef.flatMap {
-  //      case IntroduceAuthenticatorResp(actorRef) => actorRef ? ValidateAuthorizationToken(token)
-  //    } map {
-  //      case AuthorizationTokenValidated(OperationResult.OK, tokenPayload) => Some(tokenPayload)
-  //      case _ => None
-  //    }
-  //  }
 }
