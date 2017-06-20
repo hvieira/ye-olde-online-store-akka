@@ -10,8 +10,8 @@ import akka.http.scaladsl.unmarshalling.Unmarshaller
 import akka.pattern.ask
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
-import net.hvieira.yeoldeonlinestore.actor.CriticalProcessesManager.{IntroduceUserManagerReq, IntroduceUserManagerResp}
 import net.hvieira.yeoldeonlinestore.actor._
+import net.hvieira.yeoldeonlinestore.actor.store.{StoreFrontRequest, StoreFrontResponse}
 import net.hvieira.yeoldeonlinestore.actor.user.{GetUserCart, UpdateCart, UserCart}
 import net.hvieira.yeoldeonlinestore.api._
 import net.hvieira.yeoldeonlinestore.auth.{Authentication, TokenPayload}
@@ -56,27 +56,58 @@ class OnlineStoreService(val rootProcessManager: ActorRef, val tokenSecret: Stri
     path("login") {
       post {
         decodeRequest {
-          entity(as[LoginData]) {
-            loginData => performLogin(loginData)
+          entity(as[LoginData]) { loginData =>
+            performLogin(loginData)
           }
         }
       }
     } ~
-      pathPrefix("user") {
-        path("cart") {
-          authenticateOAuth2("", tokenAuthenticator) { userToken =>
-            get {
-              retrieveUserCart(userToken.user)
-            } ~
-              put {
-                entity(as[UpdateUserCartRequest]) { updateUserCartRequest =>
-                  updateUserCart(userToken.user, updateUserCartRequest)
-                }
+    path("store") {
+      get {
+        retrieveStoreFront
+      }
+    } ~
+    pathPrefix("user") {
+      path("cart") {
+        authenticateOAuth2("", tokenAuthenticator) { userToken =>
+          get {
+            retrieveUserCart(userToken.user)
+          } ~
+            put {
+              entity(as[UpdateUserCartRequest]) { updateUserCartRequest =>
+                updateUserCart(userToken.user, updateUserCartRequest)
               }
-          }
+            }
         }
       }
+    }
   )
+
+  def retrieveStoreFront: Route = {
+
+    implicit val timeout = Timeout(1 second)
+    import system.dispatcher
+
+    log.debug("retrieving store front")
+
+    val storeFrontFuture = requestStoreManagerRef.flatMap {
+      case IntroductionResponse(actorRef) => actorRef ? StoreFrontRequest
+    }
+
+    onComplete(storeFrontFuture) {
+      case Success(StoreFrontResponse(OperationResult.OK, items)) =>
+        log.debug("Returning store {}", items)
+        complete(StoreFront(items))
+
+      case Success(StoreFrontResponse(OperationResult.NOT_OK, _)) =>
+        log.error("Failed to retrieve store front")
+        complete(HttpResponse(InternalServerError))
+
+      case _ =>
+        log.error("Unexpected result for store front retrieval flow")
+        complete(HttpResponse(InternalServerError))
+    }
+  }
 
   private def performLogin(loginData: LoginData): Route = {
 
@@ -93,7 +124,7 @@ class OnlineStoreService(val rootProcessManager: ActorRef, val tokenSecret: Stri
     import system.dispatcher
 
     val cartFuture = requestUserManagerRef.flatMap {
-      case IntroduceUserManagerResp(actorRef) => actorRef ? GetUserCart(user)
+      case IntroductionResponse(actorRef) => actorRef ? GetUserCart(user)
     }
 
     onComplete(cartFuture) {
@@ -116,7 +147,7 @@ class OnlineStoreService(val rootProcessManager: ActorRef, val tokenSecret: Stri
     import system.dispatcher
 
     val cartFuture = requestUserManagerRef.flatMap {
-      case IntroduceUserManagerResp(actorRef) => actorRef ? UpdateCart(itemFromId(req), req.amount, user)
+      case IntroductionResponse(actorRef) => actorRef ? UpdateCart(itemFromId(req), req.amount, user)
     }
 
     onComplete(cartFuture) {
@@ -139,6 +170,11 @@ class OnlineStoreService(val rootProcessManager: ActorRef, val tokenSecret: Stri
   private def requestUserManagerRef = {
     implicit val timeout = Timeout(1 second)
     rootProcessManager ? IntroduceUserManagerReq
+  }
+
+  private def requestStoreManagerRef = {
+    implicit val timeout = Timeout(1 second)
+    rootProcessManager ? IntroduceStoreManagerReq
   }
 
 }

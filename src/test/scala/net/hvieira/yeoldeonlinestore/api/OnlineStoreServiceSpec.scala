@@ -54,6 +54,24 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
 
   }
 
+  "The store API" should {
+
+    "allow unauthenticated users to see items on sale" in {
+      val request: HttpRequest = Get("/store")
+
+      request ~> route ~> check {
+        status shouldBe OK
+        handled shouldBe true
+
+        val storeFront = entityAs[StoreFront]
+        storeFront.items should not be empty
+      }
+
+    }
+
+  }
+
+
   "the user API" should {
 
     "not allow requests with invalid credentials" in {
@@ -235,7 +253,8 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
 
   }
 
-  "The store API" should {
+
+  "Generically, the API" should {
 
     "return not found on resources that do not exist" in {
 
