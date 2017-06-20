@@ -21,21 +21,9 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
 
   "The login API" should {
 
-    "login users" in {
-
-      val request: HttpRequest = Post("/login",
-        HttpEntity(
-          ContentType(MediaTypes.`application/x-www-form-urlencoded`, HttpCharsets.`UTF-8`),
-          "username=Johnny&password=Bravo"))
-
-      request ~> route ~> check {
-        status shouldBe OK
-        handled shouldBe true
-
-        val responseBodyAsJson = entityAs[String].parseJson.asJsObject
-        responseBodyAsJson.fields should contain key "access_token"
-        responseBodyAsJson.fields("access_token").toString() should fullyMatch regex "(.+)\\.(.+)\\.(.+)"
-      }
+    "login users sucessfully and provide a JWT token for further authenticated requests" in {
+      val authToken = authenticateUser("Johnny", "Bravo")
+      authToken should fullyMatch regex "(.+)\\.(.+)\\.(.+)"
     }
 
     "return unsupported media type if content type is unexpected" in {
@@ -274,8 +262,7 @@ class OnlineStoreServiceSpec extends ServiceIntegrationTest {
       status shouldBe OK
       handled shouldBe true
 
-      val responseBodyAsJson = entityAs[String].parseJson.asJsObject
-      return responseBodyAsJson.fields("access_token").convertTo[String]
+      entityAs[LoginResult].authToken
     }
   }
 

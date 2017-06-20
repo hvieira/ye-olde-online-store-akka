@@ -13,7 +13,7 @@ import akka.util.Timeout
 import net.hvieira.yeoldeonlinestore.actor.CriticalProcessesManager.{IntroduceUserManagerReq, IntroduceUserManagerResp}
 import net.hvieira.yeoldeonlinestore.actor._
 import net.hvieira.yeoldeonlinestore.actor.user.{GetUserCart, UpdateCart, UserCart}
-import net.hvieira.yeoldeonlinestore.api.{APIJsonSupport, Item, LoginData, UpdateUserCartRequest}
+import net.hvieira.yeoldeonlinestore.api._
 import net.hvieira.yeoldeonlinestore.auth.{Authentication, TokenPayload}
 
 import scala.concurrent.duration._
@@ -83,7 +83,7 @@ class OnlineStoreService(val rootProcessManager: ActorRef, val tokenSecret: Stri
     val token = Authentication.generateTokenForUser(loginData.username, loginData.encryptedPassword, tokenSecret)
 
     log.debug("Returning token {}", token)
-    complete(HttpResponse(OK, entity = HttpEntity(ContentTypes.`application/json`, s"""{"access_token": "$token"}""")))
+    complete(LoginResult(token))
   }
 
   // TODO cluster methods like this into "services" that simply return the value for the API to complete/reject

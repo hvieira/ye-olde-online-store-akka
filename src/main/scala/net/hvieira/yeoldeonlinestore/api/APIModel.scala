@@ -22,3 +22,5 @@ final case class Item(id: String, cost: Double)
 final case class LoginData(username: String, encryptedPassword: String)
 
 final case class UpdateUserCartRequest(itemId: String, amount: Int)
+
+final case class LoginResult(authToken: String)
