@@ -5,6 +5,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.{Authorization, OAuth2BearerToken}
+import net.hvieira.yeoldeonlinestore.OnlineStoreService
 import net.hvieira.yeoldeonlinestore.actor.CriticalProcessesManager
 import net.hvieira.yeoldeonlinestore.test.ServiceIntegrationTest
 import spray.json._

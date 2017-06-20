@@ -1,4 +1,4 @@
-package net.hvieira.yeoldeonlinestore.api
+package net.hvieira.yeoldeonlinestore
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.event.{LogSource, Logging}
@@ -13,6 +13,7 @@ import akka.util.Timeout
 import net.hvieira.yeoldeonlinestore.actor.CriticalProcessesManager.{IntroduceUserManagerReq, IntroduceUserManagerResp}
 import net.hvieira.yeoldeonlinestore.actor._
 import net.hvieira.yeoldeonlinestore.actor.user.{GetUserCart, UpdateCart, UserCart}
+import net.hvieira.yeoldeonlinestore.api.{APIJsonSupport, Item, LoginData, UpdateUserCartRequest}
 import net.hvieira.yeoldeonlinestore.auth.{Authentication, TokenPayload}
 
 import scala.concurrent.duration._

@@ -3,7 +3,6 @@ package net.hvieira.yeoldeonlinestore
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import net.hvieira.yeoldeonlinestore.actor.CriticalProcessesManager
-import net.hvieira.yeoldeonlinestore.api.OnlineStoreService
 import net.hvieira.yeoldeonlinestore.http.HttpServer
 
 object Bootstrap extends App {
