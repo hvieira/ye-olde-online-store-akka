@@ -2,7 +2,6 @@
 
 ## Currently working on
 - Items added to cart must exist in the store front/item portfolio
-- Route definitions to separate API parts/controllers
 - Backfill unit tests of actors using the testkit
 - Concept of user balance
 - Cart checkout
