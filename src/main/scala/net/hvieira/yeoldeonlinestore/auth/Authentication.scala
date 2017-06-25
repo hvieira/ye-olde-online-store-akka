@@ -1,5 +1,6 @@
 package net.hvieira.yeoldeonlinestore.auth
 
+import akka.http.scaladsl.server.directives.Credentials
 import pdi.jwt.{Jwt, JwtAlgorithm, JwtClaim, JwtHeader}
 import spray.json.{DefaultJsonProtocol, _}
 
@@ -34,6 +35,13 @@ object Authentication extends DefaultJsonProtocol {
       .startsNow
 
     Jwt.encode(JwtHeader(JwtAlgorithm.HS256, "JWT"), claim, tokenSecret)
+  }
+
+  def requestTokenAuthenticator(tokenSecret: String): Credentials => Option[TokenPayload] = tokenAuthenticator(tokenSecret)
+
+  private def tokenAuthenticator(tokenSecret: String)(credentials: Credentials): Option[TokenPayload] = credentials match {
+    case Credentials.Provided(token) => Authentication.authInfoFromToken(token, tokenSecret)
+    case _ => None
   }
 
 }
