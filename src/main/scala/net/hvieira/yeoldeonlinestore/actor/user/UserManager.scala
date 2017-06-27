@@ -51,7 +51,7 @@ private class UserSession extends Actor with ActorLogging {
       val result = state.addToCart(item, amount)
       log.info("Updated cart is {}", result.cart)
       sender ! UserCart(OperationResult.OK, user, result.cart)
-      become(handleRequest(result), true)
+      become(handleRequest(result), discardOld = true)
 
     case GetUserCart(user) =>
       sender ! UserCart(OperationResult.OK, user, state.cart)

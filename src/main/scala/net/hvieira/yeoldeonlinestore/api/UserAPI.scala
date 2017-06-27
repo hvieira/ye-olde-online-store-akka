@@ -14,6 +14,7 @@ import net.hvieira.yeoldeonlinestore.auth.TokenPayload
 
 import scala.concurrent.duration._
 import scala.util.Success
+import scala.language.postfixOps
 
 object UserAPI {
   implicit val logSource: LogSource[AnyRef] = new LogSource[AnyRef] {

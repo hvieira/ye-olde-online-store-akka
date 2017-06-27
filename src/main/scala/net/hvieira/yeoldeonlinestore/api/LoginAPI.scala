@@ -6,6 +6,7 @@ import akka.http.scaladsl.model.{ContentTypeRange, HttpEntity, MediaTypes}
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import net.hvieira.yeoldeonlinestore.auth.Authentication
+import scala.language.postfixOps
 
 private object LoginAPI {
   implicit val logSource: LogSource[AnyRef] = new LogSource[AnyRef] {

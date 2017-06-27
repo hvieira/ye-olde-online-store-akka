@@ -12,6 +12,7 @@ import akka.pattern.ask
 
 import scala.concurrent.duration._
 import scala.util.Success
+import scala.language.postfixOps
 
 object StoreAPI {
   implicit val logSource: LogSource[AnyRef] = new LogSource[AnyRef] {
