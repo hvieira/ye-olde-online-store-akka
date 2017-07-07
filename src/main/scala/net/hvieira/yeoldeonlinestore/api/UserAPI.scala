@@ -5,12 +5,12 @@ import akka.event.{LogSource, Logging}
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server._
-import akka.http.scaladsl.server.directives.Credentials
 import akka.pattern.ask
 import akka.util.Timeout
 import net.hvieira.yeoldeonlinestore.actor.OperationResult
 import net.hvieira.yeoldeonlinestore.actor.user.{GetUserCart, UpdateCart, UserCart}
 import net.hvieira.yeoldeonlinestore.auth.TokenPayload
+import akka.http.scaladsl.server.directives.SecurityDirectives.Authenticator
 
 import scala.concurrent.duration._
 import scala.util.Success
@@ -24,8 +24,9 @@ object UserAPI {
   }
 }
 
-// TODO the signature of the authenticator can be replaced by the type alias provided by akka http
-class UserAPI(private val userManagerRef: ActorRef, private val requestAuthenticator: Credentials => Option[TokenPayload])(implicit system: ActorSystem)
+class UserAPI(private val userManagerRef: ActorRef,
+              private val requestAuthenticator: Authenticator[TokenPayload])
+             (implicit system: ActorSystem)
   extends Directives
     with APIJsonSupport {
 
