@@ -15,7 +15,13 @@ class UserAPISpec extends ServiceIntegrationTest {
   // TODO probably want to change this to use the akka testkit probe actors and such or with DI
   private val testActorSystem = ActorSystem("test-system")
   private val tokenSecret = "testSecret"
-  private val storeManRef = testActorSystem.actorOf(StoreManager.props(3))
+
+  private val itemsProvider = () => List(
+    Item("anItem", 0.0),
+    Item("anotherItem", 0.0)
+  )
+
+  private val storeManRef = testActorSystem.actorOf(StoreManager.props(3, itemsProvider))
   private val userManRef = testActorSystem.actorOf(UserManager.props())
 
   private val route = Route.seal(new UserAPI(userManRef, storeManRef, Authentication.requestTokenAuthenticator(tokenSecret)).route)

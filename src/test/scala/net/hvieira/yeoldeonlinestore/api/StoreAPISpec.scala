@@ -11,9 +11,14 @@ class StoreAPISpec extends ServiceIntegrationTest {
 
   // TODO probably want to change this to use the akka testkit probe actors and such or with DI
   private val testActorSystem = ActorSystem("test-system")
-  private val storeManRef = testActorSystem.actorOf(StoreManager.props(3))
+  private val availableItems = List(
+    Item("item1", 0.05),
+    Item("123Item", 1.0),
+    Item("Ring of Powaaa", 100000000.0)
+  )
+  private val storeManRef = testActorSystem.actorOf(StoreManager.props(3, () => availableItems))
 
-  val route = Route.seal(new StoreAPI(storeManRef).route)
+  private val route = Route.seal(new StoreAPI(storeManRef).route)
 
   "The store API" should {
 
@@ -25,7 +30,7 @@ class StoreAPISpec extends ServiceIntegrationTest {
         handled shouldBe true
 
         val storeFront = entityAs[StoreFront]
-        storeFront.items should not be empty
+        storeFront.items should contain theSameElementsAs availableItems
       }
 
     }

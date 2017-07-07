@@ -4,18 +4,19 @@ import akka.actor.{Actor, ActorRef, OneForOneStrategy, Props, SupervisorStrategy
 import net.hvieira.yeoldeonlinestore.actor.CriticalProcessesManager._
 import net.hvieira.yeoldeonlinestore.actor.store.StoreManager
 import net.hvieira.yeoldeonlinestore.actor.user.UserManager
+import net.hvieira.yeoldeonlinestore.api.Item
 
 object CriticalProcessesManager {
   private val STORE_MANAGER = "store-manager"
   private val USER_MANAGER = "user-manager"
 
-  def props() = Props(new CriticalProcessesManager)
+  def props(itemProvider: () => Iterable[Item]) = Props(new CriticalProcessesManager(itemProvider))
 }
 
-class CriticalProcessesManager() extends Actor {
+class CriticalProcessesManager(private val itemProvider: () => Iterable[Item]) extends Actor {
 
   override def preStart(): Unit = {
-    context.actorOf(StoreManager.props(3), STORE_MANAGER)
+    context.actorOf(StoreManager.props(3, itemProvider), STORE_MANAGER)
     context.actorOf(UserManager.props(), USER_MANAGER)
   }
 

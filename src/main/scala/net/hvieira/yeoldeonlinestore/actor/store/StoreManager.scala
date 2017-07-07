@@ -7,24 +7,18 @@ import net.hvieira.yeoldeonlinestore.api.Item
 
 object StoreManager {
 
-  def props(numOfSlaves: Int) = Props(new StoreManager(numOfSlaves))
-
-  private[store] val AVAILABLE_ITEMS = List(
-    Item("health potion", 10),
-    Item("mana potion", 15),
-    Item("sanity potion", 10000),
-    Item("stamina potion", 5),
-    Item("pint of dehydrated beer", 2)
-  )
+  def props(numOfSlaves: Int, itemsProvider: () => Iterable[Item]) = Props(new StoreManager(numOfSlaves, itemsProvider))
 
 }
 
-class StoreManager(private val numOfSlaves: Int) extends Actor with ActorLogging {
+class StoreManager(private val numOfSlaves: Int,
+                   private val itemProvider: () => Iterable[Item])
+  extends Actor
+    with ActorLogging {
 
   override def preStart(): Unit = {
-    (0 to numOfSlaves).foreach(i => context.actorOf(Props(new Worker), slaveName(i)))
+    (0 to numOfSlaves).foreach(i => context.actorOf(Props(new Worker(itemProvider)), slaveName(i)))
   }
-
 
   override def supervisorStrategy: SupervisorStrategy = OneForOneStrategy() {
     case _ => SupervisorStrategy.restart
@@ -45,11 +39,11 @@ class StoreManager(private val numOfSlaves: Int) extends Actor with ActorLogging
   private def slaveName(i: Int) = s"slave$i"
 }
 
-private class Worker extends Actor {
+private class Worker(private val itemProvider: () => Iterable[Item]) extends Actor {
   override def receive: Receive = {
     case StoreFrontRequest =>
       // This is where we would get stuff from a cache or a DB
-      sender ! StoreFrontResponse(OperationResult.OK, StoreManager.AVAILABLE_ITEMS)
+      sender ! StoreFrontResponse(OperationResult.OK, itemProvider.apply().toList)
   }
 }
 
