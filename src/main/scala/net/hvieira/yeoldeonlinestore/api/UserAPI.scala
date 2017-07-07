@@ -25,6 +25,7 @@ object UserAPI {
 }
 
 class UserAPI(private val userManagerRef: ActorRef,
+              private val storeManagerRef: ActorRef,
               private val requestAuthenticator: Authenticator[TokenPayload])
              (implicit system: ActorSystem)
   extends Directives
@@ -33,19 +34,19 @@ class UserAPI(private val userManagerRef: ActorRef,
   private val log = Logging(system, this)
 
   val route: Route = pathPrefix("user") {
-        path("cart") {
-          authenticateOAuth2("", requestAuthenticator) { userToken =>
-            get {
-              retrieveUserCart(userToken.user)
-            } ~
-              put {
-                entity(as[UpdateUserCartRequest]) { updateUserCartRequest =>
-                  updateUserCart(userToken.user, updateUserCartRequest)
-                }
-              }
+    path("cart") {
+      authenticateOAuth2("", requestAuthenticator) { userToken =>
+        get {
+          retrieveUserCart(userToken.user)
+        } ~
+          put {
+            entity(as[UpdateUserCartRequest]) { updateUserCartRequest =>
+              updateUserCart(userToken.user, updateUserCartRequest)
+            }
           }
-        }
       }
+    }
+  }
 
   private def retrieveUserCart(user: String): Route = {
     implicit val timeout = Timeout(1 second)

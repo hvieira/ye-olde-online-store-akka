@@ -26,12 +26,15 @@ class OnlineStoreService(val rootProcessManager: ActorRef, val tokenSecret: Stri
                         (implicit val system: ActorSystem, implicit val materializer: ActorMaterializer)
   extends Directives with APIJsonSupport {
 
-  // TODO there should be a better way to retrieve the actor references
-  val loginAPI = new LoginAPI(tokenSecret)
-  val storeAPI = new StoreAPI(requestStoreManagerRef())
-  val userAPI =  new UserAPI(requestUserManagerRef(), Authentication.requestTokenAuthenticator(tokenSecret))
+  private val storeManagerRef = requestStoreManagerRef()
+  private val userManagerRef = requestUserManagerRef()
+  private val requestTokenAuthenticator = Authentication.requestTokenAuthenticator(tokenSecret)
 
-  val route = Route.seal(
+  val loginAPI = new LoginAPI(tokenSecret)
+  val storeAPI = new StoreAPI(storeManagerRef)
+  val userAPI =  new UserAPI(userManagerRef, storeManagerRef, requestTokenAuthenticator)
+
+  val route: Route = Route.seal(
     loginAPI.route
       ~
     storeAPI.route

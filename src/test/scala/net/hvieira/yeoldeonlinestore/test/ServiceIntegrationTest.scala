@@ -14,6 +14,7 @@ abstract class ServiceIntegrationTest
     with ScalatestRouteTest
     with APIJsonSupport {
 
+  // TODO this can be replaced by simply executing the function which generates the access token
   protected def authenticateUserAndGetToken(username: String, password: String, tokenSecret: String): String = {
 
     val route = Route.seal(new LoginAPI(tokenSecret).route)

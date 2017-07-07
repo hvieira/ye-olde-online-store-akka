@@ -5,6 +5,7 @@ import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model.headers.{Authorization, OAuth2BearerToken}
 import akka.http.scaladsl.server.Route
+import net.hvieira.yeoldeonlinestore.actor.store.StoreManager
 import net.hvieira.yeoldeonlinestore.actor.user.UserManager
 import net.hvieira.yeoldeonlinestore.auth.Authentication
 import net.hvieira.yeoldeonlinestore.test.ServiceIntegrationTest
@@ -14,9 +15,10 @@ class UserAPISpec extends ServiceIntegrationTest {
   // TODO probably want to change this to use the akka testkit probe actors and such or with DI
   private val testActorSystem = ActorSystem("test-system")
   private val tokenSecret = "testSecret"
+  private val storeManRef = testActorSystem.actorOf(StoreManager.props(3))
   private val userManRef = testActorSystem.actorOf(UserManager.props())
 
-  val route = Route.seal(new UserAPI(userManRef, Authentication.requestTokenAuthenticator(tokenSecret)).route)
+  private val route = Route.seal(new UserAPI(userManRef, storeManRef, Authentication.requestTokenAuthenticator(tokenSecret)).route)
 
   "the user API" should {
 
