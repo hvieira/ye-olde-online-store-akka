@@ -1,20 +1,24 @@
 package net.hvieira.yeoldeonlinestore.api
 
+import java.util.NoSuchElementException
+
 import akka.actor.{ActorRef, ActorSystem}
+import akka.dispatch.Futures
 import akka.event.{LogSource, Logging}
-import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.{HttpEntity, HttpResponse}
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.server._
+import akka.http.scaladsl.server.directives.SecurityDirectives.Authenticator
 import akka.pattern.ask
 import akka.util.Timeout
 import net.hvieira.yeoldeonlinestore.actor.OperationResult
+import net.hvieira.yeoldeonlinestore.actor.store.{ItemFromStore, ItemInStore}
 import net.hvieira.yeoldeonlinestore.actor.user.{GetUserCart, UpdateCart, UserCart}
 import net.hvieira.yeoldeonlinestore.auth.TokenPayload
-import akka.http.scaladsl.server.directives.SecurityDirectives.Authenticator
 
 import scala.concurrent.duration._
-import scala.util.Success
 import scala.language.postfixOps
+import scala.util.{Failure, Success}
 
 object UserAPI {
   implicit val logSource: LogSource[AnyRef] = new LogSource[AnyRef] {
@@ -70,8 +74,13 @@ class UserAPI(private val userManagerRef: ActorRef,
 
   def updateUserCart(user: String, req: UpdateUserCartRequest): Route = {
     implicit val timeout = Timeout(1 second)
+    import system.dispatcher
 
-    val cartFuture = userManagerRef ? UpdateCart(itemFromId(req), req.amount, user)
+    log.info("Retrieving item from store and then updating cart")
+    val cartFuture = for {
+      storeResp <- (storeManagerRef ? ItemFromStore(req.itemId)).mapTo[ItemInStore]
+      updatedCart <- userManagerRef ? UpdateCart(storeResp.itemOpt.get, req.amount, user) if storeResp.itemOpt.isDefined
+    } yield updatedCart
 
     onComplete(cartFuture) {
       case Success(UserCart(OperationResult.OK, _, cart)) =>
@@ -82,13 +91,14 @@ class UserAPI(private val userManagerRef: ActorRef,
         log.error("Failed to update cart for user {}", user)
         complete(HttpResponse(InternalServerError))
 
+      case Failure(_: NoSuchElementException) =>
+        log.error("Item does not exist in the store")
+        complete(HttpResponse(BadRequest, entity = HttpEntity("Item does not exist in store")))
+
       case _ =>
         log.error("Unexpected result for cart retrieval flow")
         complete(HttpResponse(InternalServerError))
     }
   }
-
-  // TODO this is where we will get the ID from the storefront/item portfolio
-  private def itemFromId(req: UpdateUserCartRequest) = Item(req.itemId, 0.0)
 
 }

@@ -205,6 +205,21 @@ class UserAPISpec extends ServiceIntegrationTest {
       }
     }
 
+    "not allow authenticated requests to add items that do not exist in store to user cart" in {
+
+      val token = authenticateUserAndGetToken("user5", "userSekret", tokenSecret)
+      val authHeader = Authorization(OAuth2BearerToken(token))
+
+      val request: HttpRequest = Put("/user/cart", UpdateUserCartRequest("please dont exist item - im haxxxer", 999999))
+        .addHeader(authHeader)
+
+      request ~> route ~> check {
+        status shouldBe BadRequest
+        handled shouldBe true
+        entityAs[String] shouldBe "Item does not exist in store"
+      }
+    }
+
   }
 
 }

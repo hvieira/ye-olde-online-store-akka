@@ -3,15 +3,13 @@ package net.hvieira.yeoldeonlinestore.actor.user
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import net.hvieira.yeoldeonlinestore.actor.OperationResult
 import net.hvieira.yeoldeonlinestore.actor.OperationResult._
-import net.hvieira.yeoldeonlinestore.api.{Cart, Item, UpdateUserCartRequest}
+import net.hvieira.yeoldeonlinestore.api.{Cart, Item}
 
 object UserManager {
   def props(): Props = Props[UserManager]
 }
 
 class UserManager extends Actor {
-
-  def findCurrentUserSession(userId: String): Option[ActorRef] = context.child(userSessionActorName(userId))
 
   override def receive: Receive = {
     case req@UpdateCart(_, _, user) =>
@@ -33,13 +31,13 @@ class UserManager extends Actor {
       }
   }
 
+  private def findCurrentUserSession(userId: String): Option[ActorRef] = context.child(userSessionActorName(userId))
+
   private def createUserSession(user: String) = {
     context.actorOf(Props[UserSession], userSessionActorName(user))
   }
 
-  private def userSessionActorName(user: String) = {
-    s"userSession${user}"
-  }
+  private def userSessionActorName(user: String) = s"userSession-$user"
 }
 
 private class UserSession extends Actor with ActorLogging {
@@ -49,7 +47,7 @@ private class UserSession extends Actor with ActorLogging {
   def handleRequest(state: UserSessionState): Receive = {
     case UpdateCart(item, amount, user) =>
       val result = state.addToCart(item, amount)
-      log.info("Updated cart is {}", result.cart)
+      log.debug("Updated cart is {}", result.cart)
       sender ! UserCart(OperationResult.OK, user, result.cart)
       become(handleRequest(result), discardOld = true)
 
