@@ -21,11 +21,10 @@ private object LoginAPI {
         val username = formData.fields.getOrElse("username", "")
         val password = formData.fields.getOrElse("password", "")
 
-        if (username.isEmpty || password.isEmpty) {
+        if (username.isEmpty || password.isEmpty)
           throw new IllegalArgumentException("Missing critical login data")
-        }
-
-        LoginData(username, password)
+        else
+          LoginData(username, password)
       })
   }
 }
