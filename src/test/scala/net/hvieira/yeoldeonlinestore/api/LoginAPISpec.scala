@@ -3,12 +3,14 @@ package net.hvieira.yeoldeonlinestore.api
 import akka.http.scaladsl.model.StatusCodes._
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Route
+import net.hvieira.yeoldeonlinestore.auth.Authentication
 import net.hvieira.yeoldeonlinestore.test.ServiceIntegrationTest
 
 class LoginAPISpec extends ServiceIntegrationTest {
 
   private val tokenSecret = "testSecret"
-  private val route = Route.seal(new LoginAPI(tokenSecret).route)
+  private val tokenGenerator = Authentication.tokenGenerator(tokenSecret)
+  private val route = Route.seal(new LoginAPI(tokenGenerator).route)
 
   "The login API" should {
 

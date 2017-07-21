@@ -24,13 +24,14 @@ object OnlineStoreService {
 
 class OnlineStoreService(val rootProcessManager: ActorRef, val tokenSecret: String)
                         (implicit val system: ActorSystem, implicit val materializer: ActorMaterializer)
-  extends Directives with APIJsonSupport {
+  extends Directives
+    with APIJsonSupport {
 
   private val storeManagerRef = requestStoreManagerRef()
   private val userManagerRef = requestUserManagerRef()
   private val requestTokenAuthenticator = Authentication.requestTokenAuthenticator(tokenSecret)
 
-  val loginAPI = new LoginAPI(tokenSecret)
+  val loginAPI = new LoginAPI(Authentication.tokenGenerator(tokenSecret))
   val storeAPI = new StoreAPI(storeManagerRef)
   val userAPI =  new UserAPI(userManagerRef, storeManagerRef, requestTokenAuthenticator)
 

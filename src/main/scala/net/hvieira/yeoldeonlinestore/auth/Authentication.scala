@@ -12,6 +12,8 @@ object Authentication extends DefaultJsonProtocol {
 
   private val TOKEN_TTL_SEC = 10 * 60
 
+  type TokenGenerator = (String) => String
+
   def authInfoFromToken(token: String, secret: String): Option[TokenPayload] = {
     val decodedToken = Jwt.decodeRawAll(token, secret, Seq(JwtAlgorithm.HS256))
 
@@ -27,7 +29,7 @@ object Authentication extends DefaultJsonProtocol {
     }
   }
 
-  def generateTokenForUser(username: String, password: String, tokenSecret: String): String = {
+  def generateTokenForUser(username: String, tokenSecret: String): String = {
 
     val claim: JwtClaim = JwtClaim(TokenPayload(username).toJson.compactPrint)
       .issuedNow
@@ -42,6 +44,10 @@ object Authentication extends DefaultJsonProtocol {
   private def tokenAuthenticator(tokenSecret: String)(credentials: Credentials): Option[TokenPayload] = credentials match {
     case Credentials.Provided(token) => Authentication.authInfoFromToken(token, tokenSecret)
     case _ => None
+  }
+
+  def tokenGenerator(tokenSecret: String): TokenGenerator = {
+    (userId) => Authentication.generateTokenForUser(userId, tokenSecret)
   }
 
 }

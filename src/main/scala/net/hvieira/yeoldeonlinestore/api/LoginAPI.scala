@@ -5,7 +5,8 @@ import akka.event.{LogSource, Logging}
 import akka.http.scaladsl.model.{ContentTypeRange, HttpEntity, MediaTypes}
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.http.scaladsl.unmarshalling.Unmarshaller
-import net.hvieira.yeoldeonlinestore.auth.Authentication
+import net.hvieira.yeoldeonlinestore.auth.Authentication.TokenGenerator
+
 import scala.language.postfixOps
 
 private object LoginAPI {
@@ -29,7 +30,7 @@ private object LoginAPI {
   }
 }
 
-class LoginAPI(private val tokenSecret: String)(implicit system: ActorSystem)
+class LoginAPI(private val tokenGenerator: TokenGenerator)(implicit system: ActorSystem)
   extends Directives
     with APIJsonSupport {
 
@@ -47,9 +48,7 @@ class LoginAPI(private val tokenSecret: String)(implicit system: ActorSystem)
   }
 
   private def performLogin(loginData: LoginData): Route = {
-
-    val token = Authentication.generateTokenForUser(loginData.username, loginData.encryptedPassword, tokenSecret)
-
+    val token = tokenGenerator(loginData.username)
     log.debug("Returning token {}", token)
     complete(LoginResult(token))
   }
