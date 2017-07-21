@@ -17,8 +17,8 @@ class UserAPISpec extends ServiceIntegrationTest {
   private val tokenSecret = "testSecret"
 
   private val itemsProvider = () => List(
-    Item("anItem", 0.0),
-    Item("anotherItem", 0.0)
+    Item("anItem", 1.5),
+    Item("anotherItem", 2.709)
   )
 
   private val storeManRef = testActorSystem.actorOf(StoreManager.props(3, itemsProvider))
@@ -81,8 +81,7 @@ class UserAPISpec extends ServiceIntegrationTest {
           handled shouldBe true
 
           val cart = entityAs[Cart]
-          // TODO introduce the concept of product portfolio with items and respective prices
-          cart.items should contain("anItem" -> (2, 0.0))
+          cart.items should contain("anItem" -> ItemAndQuantity(Item("anItem", 1.5), 2))
         }
       }
 
@@ -96,8 +95,8 @@ class UserAPISpec extends ServiceIntegrationTest {
 
           val cart = entityAs[Cart]
           cart.items should contain allOf(
-            "anItem" -> (2, 0.0),
-            "anotherItem" -> (5, 0.0)
+            "anItem" -> ItemAndQuantity(Item("anItem", 1.5), 2),
+            "anotherItem" -> ItemAndQuantity(Item("anotherItem", 2.709), 5)
           )
         }
       }
@@ -117,7 +116,7 @@ class UserAPISpec extends ServiceIntegrationTest {
           handled shouldBe true
 
           val cart = entityAs[Cart]
-          cart.items should contain("anItem" -> (2, 0.0))
+          cart.items should contain("anItem" -> ItemAndQuantity(Item("anItem", 1.5), 2))
         }
       }
 
@@ -130,7 +129,7 @@ class UserAPISpec extends ServiceIntegrationTest {
           handled shouldBe true
 
           val cart = entityAs[Cart]
-          cart.items should contain("anItem" -> (5, 0.0))
+          cart.items should contain("anItem" -> ItemAndQuantity(Item("anItem", 1.5), 5))
         }
       }
 
@@ -142,7 +141,7 @@ class UserAPISpec extends ServiceIntegrationTest {
           handled shouldBe true
 
           val cart = entityAs[Cart]
-          cart.items should contain("anItem" -> (3, 0.0))
+          cart.items should contain("anItem" -> ItemAndQuantity(Item("anItem", 1.5), 3))
         }
       }
     }
@@ -161,7 +160,7 @@ class UserAPISpec extends ServiceIntegrationTest {
           handled shouldBe true
 
           val cart = entityAs[Cart]
-          cart.items should contain("anItem" -> (2, 0.0))
+          cart.items should contain("anItem" -> ItemAndQuantity(Item("anItem", 1.5), 2))
         }
       }
 
@@ -200,7 +199,7 @@ class UserAPISpec extends ServiceIntegrationTest {
           handled shouldBe true
 
           val cart = entityAs[Cart]
-          cart.items should contain("anItem" -> (17, 0.0))
+          cart.items should contain("anItem" -> ItemAndQuantity(Item("anItem", 1.5), 17))
         }
       }
     }

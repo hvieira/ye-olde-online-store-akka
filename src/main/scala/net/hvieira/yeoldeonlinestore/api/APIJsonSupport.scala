@@ -7,6 +7,7 @@ import spray.json._
 trait APIJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit val itemFormat: RootJsonFormat[Item] = jsonFormat2(Item)
+  implicit val itemAndQuantityFormat: RootJsonFormat[ItemAndQuantity] = jsonFormat2(ItemAndQuantity)
   implicit val cartFormat: RootJsonFormat[Cart] = jsonFormat1(Cart)
   implicit val updateUserCartRequestFormat: RootJsonFormat[UpdateUserCartRequest] = jsonFormat2(UpdateUserCartRequest)
   implicit val authTokenFormat: RootJsonFormat[LoginResult] = jsonFormat1(LoginResult)
