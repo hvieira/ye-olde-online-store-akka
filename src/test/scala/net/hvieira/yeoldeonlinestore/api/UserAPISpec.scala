@@ -63,7 +63,7 @@ class UserAPISpec extends ServiceIntegrationTest {
         handled shouldBe true
 
         val cart = entityAs[Cart]
-        cart.itemsToQuantityMap() shouldBe empty
+        cart.items shouldBe empty
       }
     }
 
@@ -82,7 +82,7 @@ class UserAPISpec extends ServiceIntegrationTest {
 
           val cart = entityAs[Cart]
           // TODO introduce the concept of product portfolio with items and respective prices
-          cart.itemsToQuantityMap() should contain("anItem" -> (2, 0.0))
+          cart.items should contain("anItem" -> (2, 0.0))
         }
       }
 
@@ -95,7 +95,7 @@ class UserAPISpec extends ServiceIntegrationTest {
           handled shouldBe true
 
           val cart = entityAs[Cart]
-          cart.itemsToQuantityMap() should contain allOf(
+          cart.items should contain allOf(
             "anItem" -> (2, 0.0),
             "anotherItem" -> (5, 0.0)
           )
@@ -117,7 +117,7 @@ class UserAPISpec extends ServiceIntegrationTest {
           handled shouldBe true
 
           val cart = entityAs[Cart]
-          cart.itemsToQuantityMap() should contain("anItem" -> (2, 0.0))
+          cart.items should contain("anItem" -> (2, 0.0))
         }
       }
 
@@ -130,7 +130,7 @@ class UserAPISpec extends ServiceIntegrationTest {
           handled shouldBe true
 
           val cart = entityAs[Cart]
-          cart.itemsToQuantityMap() should contain("anItem" -> (5, 0.0))
+          cart.items should contain("anItem" -> (5, 0.0))
         }
       }
 
@@ -142,7 +142,7 @@ class UserAPISpec extends ServiceIntegrationTest {
           handled shouldBe true
 
           val cart = entityAs[Cart]
-          cart.itemsToQuantityMap() should contain("anItem" -> (3, 0.0))
+          cart.items should contain("anItem" -> (3, 0.0))
         }
       }
     }
@@ -161,7 +161,7 @@ class UserAPISpec extends ServiceIntegrationTest {
           handled shouldBe true
 
           val cart = entityAs[Cart]
-          cart.itemsToQuantityMap() should contain("anItem" -> (2, 0.0))
+          cart.items should contain("anItem" -> (2, 0.0))
         }
       }
 
@@ -174,7 +174,7 @@ class UserAPISpec extends ServiceIntegrationTest {
           handled shouldBe true
 
           val cart = entityAs[Cart]
-          cart.itemsToQuantityMap() shouldBe empty
+          cart.items shouldBe empty
         }
       }
     }
@@ -200,7 +200,7 @@ class UserAPISpec extends ServiceIntegrationTest {
           handled shouldBe true
 
           val cart = entityAs[Cart]
-          cart.itemsToQuantityMap() should contain("anItem" -> (17, 0.0))
+          cart.items should contain("anItem" -> (17, 0.0))
         }
       }
     }

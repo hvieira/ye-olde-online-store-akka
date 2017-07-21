@@ -1,6 +1,6 @@
 package net.hvieira.yeoldeonlinestore.api
 
-final case class Cart(private val items: Map[String, (Int, Double)] = Map()) {
+final case class Cart(items: Map[String, (Int, Double)] = Map()) {
 
   def addItemsToCart(item: Item, amount: Int): Cart = {
     // TODO include cats lib to use associative monoid   original |+| Map(key -> 1)
@@ -12,9 +12,6 @@ final case class Cart(private val items: Map[String, (Int, Double)] = Map()) {
 
     Cart(updatedItemMap)
   }
-
-  def itemsToQuantityMap(): Map[String, (Int, Double)] = items
-
 }
 
 final case class Item(id: String, cost: Double)
