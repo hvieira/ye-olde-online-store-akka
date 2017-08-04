@@ -5,13 +5,16 @@ import akka.stream.ActorMaterializer
 import net.hvieira.yeoldeonlinestore.actor.CriticalProcessesManager
 import net.hvieira.yeoldeonlinestore.api.Item
 import net.hvieira.yeoldeonlinestore.http.HttpServer
+import net.hvieira.yeoldeonlinestore.settings.AppSettings
 
 object Bootstrap extends App {
 
   implicit val actorSystem = ActorSystem("ye-olde-online-store")
   implicit val actorMaterializer = ActorMaterializer()
 
-  private val tokenSecret = actorSystem.settings.config.getString("auth.token.secret")
+  val settings = AppSettings(actorSystem)
+
+  private val tokenSecret = settings.authSettings.tokenSecret
 
   private val itemProvider = () => List(
     Item("health potion", 10),
