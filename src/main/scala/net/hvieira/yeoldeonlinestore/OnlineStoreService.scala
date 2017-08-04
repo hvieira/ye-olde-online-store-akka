@@ -8,7 +8,7 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import net.hvieira.yeoldeonlinestore.actor._
 import net.hvieira.yeoldeonlinestore.api._
-import net.hvieira.yeoldeonlinestore.auth.Authentication
+import net.hvieira.yeoldeonlinestore.auth.{Authentication, PresetInMemoryUserAuthenticator}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -31,7 +31,7 @@ class OnlineStoreService(val rootProcessManager: ActorRef, val tokenSecret: Stri
   private val userManagerRef = requestUserManagerRef()
   private val requestTokenAuthenticator = Authentication.requestTokenAuthenticator(tokenSecret)
 
-  val loginAPI = new LoginAPI(Authentication.tokenGenerator(tokenSecret))
+  val loginAPI = new LoginAPI(Authentication.tokenGenerator(tokenSecret), new PresetInMemoryUserAuthenticator())
   val storeAPI = new StoreAPI(storeManagerRef)
   val userAPI =  new UserAPI(userManagerRef, storeManagerRef, requestTokenAuthenticator)
 

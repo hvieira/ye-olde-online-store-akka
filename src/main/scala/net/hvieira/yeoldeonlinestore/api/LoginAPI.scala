@@ -2,10 +2,11 @@ package net.hvieira.yeoldeonlinestore.api
 
 import akka.actor.ActorSystem
 import akka.event.{LogSource, Logging}
-import akka.http.scaladsl.model.{ContentTypeRange, HttpEntity, MediaTypes}
+import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.{Directives, Route}
 import akka.http.scaladsl.unmarshalling.Unmarshaller
 import net.hvieira.yeoldeonlinestore.auth.Authentication.TokenGenerator
+import net.hvieira.yeoldeonlinestore.auth.UserAuthenticator
 
 import scala.language.postfixOps
 
@@ -30,7 +31,8 @@ private object LoginAPI {
   }
 }
 
-class LoginAPI(private val tokenGenerator: TokenGenerator)(implicit system: ActorSystem)
+class LoginAPI(tokenGenerator: TokenGenerator, userAuthenticator: UserAuthenticator)
+              (implicit system: ActorSystem)
   extends Directives
     with APIJsonSupport {
 
@@ -48,9 +50,16 @@ class LoginAPI(private val tokenGenerator: TokenGenerator)(implicit system: Acto
   }
 
   private def performLogin(loginData: LoginData): Route = {
-    val token = tokenGenerator(loginData.username)
-    log.debug("Returning token {}", token)
-    complete(LoginResult(token))
+
+    userAuthenticator.authenticate(loginData.username, loginData.encryptedPassword) match {
+      case Some(authenticatedUser) =>
+        val token = tokenGenerator(loginData.username)
+        log.debug("Returning token {}", token)
+        complete(LoginResult(token))
+
+      case None =>
+        complete(HttpResponse(StatusCodes.Unauthorized))
+    }
   }
 
 }
