@@ -23,3 +23,13 @@ final case class UpdateUserCartRequest(itemId: String, amount: Int)
 final case class LoginResult(authToken: String)
 
 final case class StoreFront(items: List[Item])
+
+sealed trait PurchaseResult {
+  def success: Boolean
+}
+final case class SuccessfulPurchase(items: List[Item]) extends PurchaseResult {
+  override def success: Boolean = true
+}
+final case class FailedPurchase(failureReason: String) extends PurchaseResult {
+  override def success: Boolean = false
+}
