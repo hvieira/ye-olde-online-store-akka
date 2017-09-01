@@ -6,6 +6,8 @@ final case class ItemAndQuantity(item: Item, amount: Int)
 
 final case class Cart(items: Map[String, ItemAndQuantity] = Map()) {
 
+  def totalCost: Double = items.values.map(i => i.amount * i.item.cost).sum
+
   def addItemsToCart(item: Item, amount: Int): Cart = {
     // TODO include cats lib to use associative monoid   original |+| Map(key -> 1)
     // TODO If you use cats, the import is `cats.syntax.semigroup._` but it is simpler to just import `cats.all._`
@@ -27,7 +29,7 @@ final case class StoreFront(items: List[Item])
 sealed trait PurchaseResult {
   def success: Boolean
 }
-final case class SuccessfulPurchase(items: List[Item]) extends PurchaseResult {
+final case class SuccessfulPurchase(cart: Cart) extends PurchaseResult {
   override def success: Boolean = true
 }
 final case class FailedPurchase(failureReason: String) extends PurchaseResult {

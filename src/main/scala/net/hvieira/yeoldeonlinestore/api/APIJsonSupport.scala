@@ -13,10 +13,10 @@ trait APIJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val storeFrontFormat: RootJsonFormat[StoreFront] = jsonFormat1(StoreFront)
 
   implicit object SuccessfulPurchaseFormat extends RootJsonFormat[SuccessfulPurchase] {
-    def write(p: SuccessfulPurchase) = JsObject(Map("success" -> p.success.toJson, "items" -> p.items.toJson))
+    def write(p: SuccessfulPurchase) = JsObject(Map("success" -> p.success.toJson, "items" -> p.cart.toJson))
 
     def read(value: JsValue) = value.asJsObject.getFields("items") match {
-      case Seq(items) => SuccessfulPurchase(items.convertTo[List[Item]])
+      case Seq(items) => SuccessfulPurchase(items.convertTo[Cart])
     }
   }
 

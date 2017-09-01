@@ -66,8 +66,8 @@ private class UserSessionState(val balance: Double = 0, val cart: Cart = Cart(Ma
     new UserSessionState(balance, cart.addItemsToCart(item, amount))
 }
 
-case class GetUserCart(user: String)
+case class GetUserCart(userId: String)
 
-case class UserCart(result: OperationResult, user: String, cart: Cart)
+case class UserCart(result: OperationResult, userId: String, cart: Cart)
 
 case class UpdateCart(item: Item, amount: Int, userId: String)

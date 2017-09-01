@@ -10,7 +10,13 @@ class APIJsonSupportSpec extends WordSpec with Matchers with APIJsonSupport {
 
     "successful" should {
       "serialize and deserialize properly" in {
-        val originalValue = SuccessfulPurchase(List(Item("1", 0.1), Item("2", 0.3), Item("b", 0.0)))
+        val originalValue = SuccessfulPurchase(
+          Cart(
+            Map(
+              "anItemId" -> ItemAndQuantity(Item("item243", 67.01), 1),
+              "anotherItemIdz" -> ItemAndQuantity(Item("item7", 7.30), 3)
+            )
+          ))
         val result = originalValue.toJson.convertTo[SuccessfulPurchase]
 
         result should equal(originalValue)
