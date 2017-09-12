@@ -57,6 +57,7 @@ class PurchaseAPI(private val userManagerRef: ActorRef,
   }
 
   def checkoutCart(user: String): Route = {
+    log.debug("Checking out cart for user {}", user)
     implicit val timeout = Timeout(10 second)
 
     val future = for {
@@ -67,9 +68,15 @@ class PurchaseAPI(private val userManagerRef: ActorRef,
     } yield (purchaseResult._1, cartRetrieveResult.cart)
 
     onComplete(future.mapTo[(OperationResult, Cart)]) {
-      case Success((OperationResult.OK, cart)) => complete(SuccessfulPurchase(cart))
-      case Failure(_: NoSuchElementException) => complete(HttpResponse(BadRequest))
-      case _ => complete(HttpResponse(InternalServerError))
+      case Success((OperationResult.OK, cart)) =>
+        log.info("Successful purchase")
+        complete(SuccessfulPurchase(cart))
+      case Failure(_: NoSuchElementException) =>
+        log.info("User does not have items in cart for purchase")
+        complete(HttpResponse(BadRequest))
+      case _ =>
+        log.error("Failed to purchase cart")
+        complete(HttpResponse(InternalServerError))
     }
   }
 

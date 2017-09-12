@@ -22,6 +22,14 @@ A auth token is returned which can then be used in subsequent requests. For exam
 
 `curl -v -X GET -H "Authorization: Bearer <token>" "localhost:9000/user/cart"`
 
+Put items in the cart
+
+`curl -v -X PUT -H "Authorization: Bearer <token>" -H "Content-Type: application/json" --data '{"itemId":"sanity potion", "amount": 1}' "localhost:9000/user/cart"`
+
+Checkout
+
+`curl -v -X POST -H "Authorization: Bearer <token>" "localhost:9000/purchase"`
+
 
 
 

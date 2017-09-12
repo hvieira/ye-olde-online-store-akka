@@ -33,7 +33,8 @@ class OnlineStoreService(val rootProcessManager: ActorRef, val tokenSecret: Stri
 
   val loginAPI = new LoginAPI(Authentication.tokenGenerator(tokenSecret), new PresetInMemoryUserAuthenticator())
   val storeAPI = new StoreAPI(storeManagerRef)
-  val userAPI =  new UserAPI(userManagerRef, storeManagerRef, requestTokenAuthenticator)
+  val userAPI = new UserAPI(userManagerRef, storeManagerRef, requestTokenAuthenticator)
+  val purchaseAPI = new PurchaseAPI(userManagerRef, requestTokenAuthenticator)
 
   val route: Route = Route.seal(
     loginAPI.route
@@ -41,6 +42,8 @@ class OnlineStoreService(val rootProcessManager: ActorRef, val tokenSecret: Stri
     storeAPI.route
       ~
     userAPI.route
+      ~
+    purchaseAPI.route
   )
 
   // TODO consider getting the reference in a better way
